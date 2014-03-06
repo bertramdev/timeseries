@@ -14,7 +14,7 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 
 	void testStartIntervalStuff() {
 		def provider = new TestProvider(),
-		    now = new Date()
+			now = new Date()
 		println now
 		println provider.test('1s', now)
 		println provider.test('10s', now)

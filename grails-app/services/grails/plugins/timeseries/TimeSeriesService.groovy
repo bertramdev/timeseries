@@ -11,42 +11,42 @@ class TimeSeriesService {
 	private Timer timer = new Timer()
 	private Long persistInterval = 3600000l
 	private TimerTask timerTask = new TimerTask() {
-        public void run() {
-        	callProviderMethod('manageStorage')
-        }
-    }
+		public void run() {
+			callProviderMethod('manageStorage')
+		}
+	}
 
-    public TimeSeriesService() {
+	public TimeSeriesService() {
 		log.debug('TimeSeriesService constructed')
-    }
+	}
 
-    void callProviderMethod(m) {
-    	providers.each {k, provider->
-        	try {
-        		log.debug('Calling '+m+' on timeseries provider '+k)
-	            provider."$m"(getConfig())
-        	} catch(Throwable t) {
-        		log.error(t)
-        	}
-    	}
-    }
+	void callProviderMethod(m) {
+		providers.each {k, provider->
+			try {
+				log.debug('Calling '+m+' on timeseries provider '+k)
+				provider."$m"(getConfig())
+			} catch(Throwable t) {
+				log.error(t)
+			}
+		}
+	}
 
-    void destroy() {
-        log.info("shutting down TimeSeriesService...")
+	void destroy() {
+		log.info("shutting down TimeSeriesService...")
 		timer.cancel()
 		timerTask.cancel()
-    	callProviderMethod('shutdown')
-        log.info("TimeSeriesService shutdown.")
-    }
+		callProviderMethod('shutdown')
+		log.info("TimeSeriesService shutdown.")
+	}
 
-    void init() {
-    	callProviderMethod('init')
-        if (grailsApplication.config.grails.plugins.timeseries.manageStorage.containsKey('interval')) {
-        	this.persistInterval = Long.parseLong(grailsApplication.config.grails.plugins.timeseries.manageStorage.interval)
-        }
-        // schedule "manageStorage" call to all teh providers
+	void init() {
+		callProviderMethod('init')
+		if (grailsApplication.config.grails.plugins.timeseries.manageStorage.containsKey('interval')) {
+			this.persistInterval = Long.parseLong(grailsApplication.config.grails.plugins.timeseries.manageStorage.interval)
+		}
+		// schedule "manageStorage" call to all teh providers
 		timer.scheduleAtFixedRate(timerTask, this.persistInterval, this.persistInterval)
-    }
+	}
 
 	void registerProvider(TimeSeriesProvider provider, Boolean setAsDefault = true) {
 		providers[provider.name] = provider
@@ -81,19 +81,19 @@ class TimeSeriesService {
 		getProvider(providerName).flush()		
 	}
 
-    void saveMetric(referenceId, String metricName, Double metricValue, timestamp = new Date(), providerName = null) {
-    	saveMetrics(referenceId, ["$metricName":metricValue], timestamp, providerName)
-    }
+	void saveMetric(referenceId, String metricName, Double metricValue, timestamp = new Date(), providerName = null) {
+		saveMetrics(referenceId, ["$metricName":metricValue], timestamp, providerName)
+	}
 
-    void saveMetrics(referenceId, Map<String, Double> metrics, timestamp = new Date(), providerName = null) {
+	void saveMetrics(referenceId, Map<String, Double> metrics, timestamp = new Date(), providerName = null) {
 		getProvider(providerName).saveMetrics(referenceId.toString(), metrics, timestamp, getConfig())
-    }
+	}
 
-    void bulkSaveMetrics(referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, providerName = null) {
-    	getProvider(providerName).bulkSaveMetrics(referenceId, metricsByTime, getConfig())
-    }
+	void bulkSaveMetrics(referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, providerName = null) {
+		getProvider(providerName).bulkSaveMetrics(referenceId, metricsByTime, getConfig())
+	}
 
-    /*   
+	/*   
 		{
 			'server-0': {
 				'212-14-2014-02:01:00': {
@@ -107,11 +107,11 @@ class TimeSeriesService {
 			}
 		}
 	*/
-    def getMetrics(Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, providerName = null) {
-    	getProvider(providerName).getMetrics(start, end, referenceIdQuery, metricNameQuery, getConfig())
-    }
+	def getMetrics(Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, providerName = null) {
+		getProvider(providerName).getMetrics(start, end, referenceIdQuery, metricNameQuery, getConfig())
+	}
 
-    /*   
+	/*   
 		{
 			'server-0': {
 				'212-14-2014-02:00:00': {
@@ -142,8 +142,8 @@ class TimeSeriesService {
 			}
 		}
 	*/
-    def getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, providerName = null) {
-    	getProvider(providerName).getMetricAggregates(resolution, start, end, referenceIdQuery, metricNameQuery, getConfig())
-    }
+	def getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, providerName = null) {
+		getProvider(providerName).getMetricAggregates(resolution, start, end, referenceIdQuery, metricNameQuery, getConfig())
+	}
 
 }

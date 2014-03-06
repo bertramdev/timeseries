@@ -84,7 +84,7 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 	}
 
 	@Override
-    void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, groovy.util.ConfigObject config) {
+	void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, groovy.util.ConfigObject config) {
 		def startAndInterval = getMetricStartAndInterval(timestamp, config),
 			aggregates = getAggregateStartsAndIntervals(timestamp, config)
 		internalData[referenceId] = internalData[referenceId] ?: [__r:startAndInterval.resolution,__m:[:].asSynchronized(),__a:[:].asSynchronized()].asSynchronized()
@@ -121,25 +121,25 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 				currentAgg[k].__t += v
 			}
 		}
-    }
+	}
 
 	@Override
-    void bulkSaveMetrics(String referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, groovy.util.ConfigObject config) {
-    	metricsByTime.each {timestamp, metrics->
-    		saveMetrics(referenceId, metrics, timestamp, config)
-    	}
-    }
+	void bulkSaveMetrics(String referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, groovy.util.ConfigObject config) {
+		metricsByTime.each {timestamp, metrics->
+			saveMetrics(referenceId, metrics, timestamp, config)
+		}
+	}
 
 	@Override
-    Map<String, Map<Date, Map<String, Double>>> getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, groovy.util.ConfigObject config) {
+	Map<String, Map<Date, Map<String, Double>>> getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, groovy.util.ConfigObject config) {
 
-    }
+	}
 
 	@Override
-    Map<String, Map<Date, Map<String, Map<String, Double>>>> getMetricAggregates(String resolution, Date start, Date end, 
-    	String referenceIdQuery, String metricNameQuery, groovy.util.ConfigObject config) {
+	Map<String, Map<Date, Map<String, Map<String, Double>>>> getMetricAggregates(String resolution, Date start, Date end, 
+		String referenceIdQuery, String metricNameQuery, groovy.util.ConfigObject config) {
 
-    }
+	}
 
 
 }

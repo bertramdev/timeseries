@@ -10,13 +10,13 @@ import grails.plugins.timeseries.mem.*
 @TestFor(TimeSeriesService)
 class TimeSeriesServiceSpec extends Specification {
 
-    def setup() {
-    }
+	def setup() {
+	}
 
-    def cleanup() {
-    }
+	def cleanup() {
+	}
 
-    void "test something"() {
+	void "test something"() {
 
-    }
+	}
 }
