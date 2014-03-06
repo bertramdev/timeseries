@@ -9,7 +9,7 @@ class TimeSeriesService {
 	def grailsApplication
 	static final DEFAULT_KEY = '__default'
 	private Timer timer = new Timer()
-	private Long persistInterval = 3600000l
+	private Long manageStorageInterval = 3600000l
 	private TimerTask timerTask = new TimerTask() {
 		public void run() {
 			callProviderMethod('manageStorage')
@@ -23,6 +23,7 @@ class TimeSeriesService {
 	void callProviderMethod(m) {
 		providers.each {k, provider->
 			try {
+				// @TODO need to spin up some new threads for this?
 				log.debug('Calling '+m+' on timeseries provider '+k)
 				provider."$m"(getConfig())
 			} catch(Throwable t) {
@@ -42,10 +43,12 @@ class TimeSeriesService {
 	void init() {
 		callProviderMethod('init')
 		if (grailsApplication.config.grails.plugins.timeseries.manageStorage.containsKey('interval')) {
-			this.persistInterval = Long.parseLong(grailsApplication.config.grails.plugins.timeseries.manageStorage.interval)
+			this.manageStorageInterval = Long.parseLong(grailsApplication.config.grails.plugins.timeseries.manageStorage.interval)
 		}
 		// schedule "manageStorage" call to all teh providers
-		timer.scheduleAtFixedRate(timerTask, this.persistInterval, this.persistInterval)
+		if (this.manageStorageInterval) {
+			timer.scheduleAtFixedRate(timerTask, this.manageStorageInterval, this.manageStorageInterval)
+		}
 	}
 
 	void registerProvider(TimeSeriesProvider provider, Boolean setAsDefault = true) {
