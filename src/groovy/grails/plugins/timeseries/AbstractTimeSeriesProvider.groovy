@@ -49,7 +49,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			}
 		}
 	*/
-	abstract Map<String, Map<Date, Map<String, Double>>> getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, groovy.util.ConfigObject config)
+	abstract Map<String, Map<String, List<Map<String, Object>>>> getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
 
 	/*   
 		{
@@ -82,7 +82,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			}
 		}
 	*/
-	abstract Map<String, Map<Date, Map<String, Map<String, Double>>>> getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, groovy.util.ConfigObject config)
+	abstract Map<String, Map<String, List<Map<String, Object>>>> getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
 
 
 	protected DEFAULT_RESOLUTION = ONE_MINUTE

@@ -110,8 +110,8 @@ class TimeSeriesService {
 			}
 		}
 	*/
-	def getMetrics(Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, providerName = null) {
-		getProvider(providerName).getMetrics(start, end, referenceIdQuery, metricNameQuery, getConfig())
+	Map<String, Map<String, Map<Date, Double>>> getMetrics(Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, Map<String, Object> options = null, providerName = null) {
+		getProvider(providerName).getMetrics(start, end, referenceIdQuery, metricNameQuery, options, getConfig())
 	}
 
 	/*   
@@ -145,8 +145,8 @@ class TimeSeriesService {
 			}
 		}
 	*/
-	def getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, providerName = null) {
-		getProvider(providerName).getMetricAggregates(resolution, start, end, referenceIdQuery, metricNameQuery, getConfig())
+	def getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null,Map<String, Object> options = null,  providerName = null) {
+		getProvider(providerName).getMetricAggregates(resolution, start, end, referenceIdQuery, metricNameQuery, options, getConfig())
 	}
 
 }

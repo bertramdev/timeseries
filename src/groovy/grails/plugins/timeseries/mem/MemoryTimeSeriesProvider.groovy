@@ -3,6 +3,10 @@ package grails.plugins.timeseries.mem
 import grails.plugins.timeseries.*
 import grails.converters.*
 
+/*
+data model for this provider is really a model for a document-based storage provider
+it would be more efficient to store data in a less structured form in a SortedMap kind of thing  
+*/
 class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 
 	private Map internalData
@@ -129,15 +133,73 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 			saveMetrics(referenceId, metrics, timestamp, config)
 		}
 	}
-
+/*
+{"testSaveMetrics": {
+   "__m": {"Wed Mar 05 17:44:00 PST 2014": {
+      "__n": 60,
+      "poop": {
+         "__i": 1,
+         "__v": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            100
+         ],
+         "__t": 100
+      },
+      "__e": "2014-03-06T01:45:00Z",
+      "__s": "2014-03-06T01:44:00Z"
+   }},
+   "__r": "1s",
+   "__a": {}
+}}
+*/
 	@Override
-	Map<String, Map<Date, Map<String, Double>>> getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, groovy.util.ConfigObject config) {
+	Map<String, Map<String, List<Map<String, Object>>>> getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config) {
+		// exact match only for the moment
+		def rtn = [:],
+			res
+		internalData.each {refId, db->
+			if (referenceIdQuery == null || refId =~ referenceIdQuery) {
+				res = db.__r
+				rtn[refId] = rtn[refId] ?: [:] 
+				db?.__m?.each {timestamp, metrics->
+					println 'Testing '+timestamp
+					def interval = SUPPORTED_RESOLUTIONS_SIZE[res]
+					if (timestamp > start && timestamp < end) {
+						println 'passed '+timestamp
+						metrics.each {metricName, map ->
+							if (!metricName.startsWith('__') && (metricNameQuery == null || metricName =~ metricNameQuery)) {
+								def f = false
+								map.__v.eachWithIndex {v,i->
+									if (v != null || f) {
+										def intervalTimestamp = new Date(timestamp.time + (i*interval))
+										rtn[refId][metricName] = rtn[refId][metricName] ?: []
+										def rec = [s:intervalTimestamp, v:v]
+										if (options.includeEndDate) rec.e = Date(timestamp.time + (i*interval) + interval)
+										rtn[refId][metricName] << rec
+										f = true
+									}
+								}
+							}
+						}
 
+					}
+				}				
+			}
+		}	
+		rtn
 	}
 
 	@Override
-	Map<String, Map<Date, Map<String, Map<String, Double>>>> getMetricAggregates(String resolution, Date start, Date end, 
-		String referenceIdQuery, String metricNameQuery, groovy.util.ConfigObject config) {
+	Map<String, Map<String, List<Map<String, Object>>>> getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config) {
 
 	}
 
