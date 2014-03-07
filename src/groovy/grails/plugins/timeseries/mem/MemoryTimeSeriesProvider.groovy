@@ -183,7 +183,7 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 										def intervalTimestamp = new Date(timestamp.time + (i*interval))
 										rtn[refId][metricName] = rtn[refId][metricName] ?: []
 										def rec = [s:intervalTimestamp, v:v]
-										if (options.includeEndDate) rec.e = Date(timestamp.time + (i*interval) + interval)
+										if (options?.includeEndDate) rec.e = Date(timestamp.time + (i*interval) + interval)
 										rtn[refId][metricName] << rec
 										f = true
 									}
