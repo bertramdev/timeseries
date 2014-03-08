@@ -12,7 +12,7 @@ class TimeSeriesGrailsPlugin {
 	def author = "Jeremy Leng"
 	def authorEmail = "jleng@bacp.com"
 	def description = '''\
-Grails Plugin for read/write of timeseries data. Defines interface for pluggable storage providers and includes an in-memory storage provider.
+The Grails Timeseries Plugin provides a simplified service for reading/writing timeseries data and storing it in a variety of time resolutions. Read method output is intended to support javascript charting libraries. The plugin defines an interface for pluggable storage providers and includes an implementation in-memory storage provider.
 '''
 
 	// URL to the plugin's documentation

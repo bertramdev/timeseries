@@ -67,7 +67,7 @@ interface TimeSeriesProvider {
             ]
          }
       ]
-   }],
+   }]
 }
 	*/
 	// options might be includeEndDate:true, includeNulls:true

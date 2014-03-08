@@ -145,7 +145,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.start.set(Calendar.HOUR, 0)
 			def date = rtn.start.get(Calendar.DATE)
 			date = Math.floor(date / 2).intValue()
-			rtn.start.set(Calendar.DATE, date)
+			rtn.start.set(Calendar.DATE, date*2)
 			def diffMin = (interval.time.time - rtn.start.time.time) / 60000
 			rtn.interval = Math.floor(diffMin / 60).intValue()
 			rtn.range = 2880
@@ -155,7 +155,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.start.set(Calendar.HOUR, 0)
 			def date = rtn.start.get(Calendar.DATE)
 			date = Math.floor(date / 4).intValue()
-			rtn.start.set(Calendar.DATE, date)
+			rtn.start.set(Calendar.DATE, date*4)
 			def diffMin = (interval.time.time - rtn.start.time.time) / 60000
 			rtn.interval = Math.floor(diffMin / 120).intValue()
 			rtn.range = 1440*4
@@ -165,7 +165,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.start.set(Calendar.HOUR, 0)
 			def date = rtn.start.get(Calendar.DATE)
 			date = Math.floor(date / 7).intValue()
-			rtn.start.set(Calendar.DATE, date)
+			rtn.start.set(Calendar.DATE, date*7)
 			def diffMin = (interval.time.time - rtn.start.time.time) / 60000
 			rtn.range = 600
 			rtn.interval = Math.floor(diffMin / 240).intValue()

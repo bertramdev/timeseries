@@ -2,14 +2,14 @@ package grails.plugins.timeseries.mem
 
 import grails.plugins.timeseries.*
 import grails.converters.*
-
+import groovy.transform.PackageScope
 /*
 data model for this provider is really a model for a document-based storage provider
 it would be more efficient to store data in a less structured form in a SortedMap kind of thing  
 */
 class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 
-	private Map internalData
+	@PackageScope Map internalData
 
 	private String dataPath
 	private Boolean persist
