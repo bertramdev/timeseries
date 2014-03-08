@@ -12,7 +12,7 @@ class TimeSeriesGrailsPlugin {
 	def author = "Jeremy Leng"
 	def authorEmail = "jleng@bacp.com"
 	def description = '''\
-Brief summary/description of the plugin.
+Grails Plugin for read/write of timeseries data. Defines interface for pluggable storage providers and includes an in-memory storage provider.
 '''
 
 	// URL to the plugin's documentation
@@ -55,7 +55,7 @@ Brief summary/description of the plugin.
 		if (application.config.grails.plugins.timeseries.providers.mem.containsKey('persist')) {
 			persist = application.config.grails.plugins.timeseries.providers.mem.boolean('persist')
 		}
-
+		// register provider instance and flag for setting as default provider
 		ctx['timeSeriesService'].registerProvider(new grails.plugins.timeseries.mem.MemoryTimeSeriesProvider(persist, memStoragePath), true)
 	}
 
