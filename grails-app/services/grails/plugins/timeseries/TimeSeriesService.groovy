@@ -105,55 +105,142 @@ class TimeSeriesService {
 	}
 
 	/*   
-		{
-			'server-0': {
-				'212-14-2014-02:01:00': {
-					'cpu' : 102.83333333333333,
-					'memory' : 102.83333333333333
-				},
-				'212-14-2014-02:02:00': {
-					'cpu' : 102.83333333333333,
-					'memory' : 102.83333333333333
-				}
-			}
-		}
-	*/
-	Map<String, Map<String, Map<Date, Double>>> getMetrics(Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, Map<String, Object> options = null, providerName = null) {
+{
+   "start": "1970-01-01T00:00:00Z",
+   "end": "2014-03-08T04:04:29Z",
+   "resolutionName": "1s",
+   "resolutionInterval": 1,
+   "items": [{
+      "referenceId": "server-0",
+      "series": [
+         {
+            "name": "met1",
+            "values": [
+               {
+                  "timestamp": "2014-03-08T04:01:29Z",
+                  "value": 1
+               },
+               ...
+               {
+                  "timestamp": "2014-03-08T04:02:03Z",
+                  "value": 35
+               }
+            ]
+         },
+         {
+            "name": "met2",
+            "values": [
+               {
+                  "timestamp": "2014-03-08T04:01:29Z",
+                  "value": 120
+               },
+				...
+               {
+                  "timestamp": "2014-03-08T04:02:03Z",
+                  "value": 86
+               }
+            ]
+         }
+      ]
+   }]
+}	*/
+	Map getMetrics(Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, Map<String, Object> options = null, providerName = null) {
 		getProvider(providerName).getMetrics(start, end, referenceIdQuery, metricNameQuery, options, getConfig())
 	}
 
 	/*   
-		{
-			'server-0': {
-				'212-14-2014-02:00:00': {
-					'cpu' : {
-						'count': 12,
-						'total': 1234,
-						'avg': 102.83333333333333
-					},
-					'memory' : {
-						'count': 12,
-						'total': 1234,
-						'avg': 102.83333333333333
-					}
-				}
-				'212-14-2014-03:00:00': {
-					'cpu' : {
-						'count': 12,
-						'total': 1234,
-						'avg': 102.83333333333333
-					},
-					'memory' : {
-						'count': 12,
-						'total': 1234,
-						'avg': 102.83333333333333
-					}
-				}
-	
-			}
-		}
+{
+   "start": "1970-01-01T00:00:00Z",
+   "resolutionName": "1m",
+   "end": "2014-03-08T04:04:29Z",
+   "resolutionInterval": 60,   
+   "items": [
+      {
+         "referenceId": "testSaveMetricsRegularWithAggregatesWithGet",
+         "series": [
+            {
+               "values": [
+                  {
+                     "count": 32,
+                     "start": "2014-03-08T04:01:00Z",
+                     "sum": 528,
+                     "average": 16.5
+                  },
+                  ...
+                  {
+                     "count": 29,
+                     "start": "2014-03-08T04:03:00Z",
+                     "sum": 3103,
+                     "average": 107
+                  }
+               ],
+               "name": "met1"
+            },
+            {
+               "values": [
+                  {
+                     "count": 32,
+                     "start": "2014-03-08T04:01:00Z",
+                     "sum": 3344,
+                     "average": 104.5
+                  },
+                  ...
+                  {
+                     "count": 29,
+                     "start": "2014-03-08T04:03:00Z",
+                     "sum": 406,
+                     "average": 14
+                  }
+               ],
+               "name": "met2"
+            }
+         ]
+      },
+      {
+         "referenceId": "testSaveMetricsRegularWithAggregatesWithGet2",
+         "series": [
+            {
+               "values": [
+                  {
+                     "count": 32,
+                     "start": "2014-03-08T04:01:00Z",
+                     "sum": 649.4399999999999,
+                     "average": 20.294999999999998
+                  },
+                  ...
+                  {
+                     "count": 29,
+                     "start": "2014-03-08T04:03:00Z",
+                     "sum": 3816.6899999999996,
+                     "average": 131.60999999999999
+                  }
+               ],
+               "name": "met1"
+            },
+            {
+               "values": [
+                  {
+                     "count": 32,
+                     "start": "2014-03-08T04:01:00Z",
+                     "sum": 4113.119999999999,
+                     "average": 128.53499999999997
+                  },
+                  ...
+                  {
+                     "count": 29,
+                     "start": "2014-03-08T04:03:00Z",
+                     "sum": 499.38,
+                     "average": 17.22
+                  }
+               ],
+               "name": "met2"
+            }
+         ]
+      }
+   ]
+}
 	*/
-	def getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null,Map<String, Object> options = null,  providerName = null) {
+	Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null,Map<String, Object> options = null,  providerName = null) {
 		getProvider(providerName).getMetricAggregates(resolution, start, end, referenceIdQuery, metricNameQuery, options, getConfig())
 	}
 
