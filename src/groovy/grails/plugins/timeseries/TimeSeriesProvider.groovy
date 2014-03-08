@@ -13,7 +13,7 @@ interface TimeSeriesProvider {
 	static TWELVE_HOURS = '12h'
 	static ONE_DAY = '1d'
 
-	static SUPPORTED_RESOLUTIONS_SIZE = ['1s': 1000l, '10s': 10000l, '30s': 30000l, '1m': 60000l, '15m': 750000l, '1h': 3000000l, '2h': 6000000l, '4h': 12000000l, '12h': 36000000l, '1d': 72000000l]
+	static SUPPORTED_RESOLUTIONS_INTERVAL_SIZE = ['1s': 1000l, '10s': 10000l, '30s': 30000l, '1m': 60000l, '15m': 750000l, '1h': 3000000l, '2h': 6000000l, '4h': 12000000l, '12h': 36000000l, '1d': 72000000l]
 
 	String getName()
 
@@ -30,35 +30,140 @@ interface TimeSeriesProvider {
 	void bulkSaveMetrics(String referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, groovy.util.ConfigObject config)
 
 	/*   
-	{
-		'server-0': {
-			'cpu': {
-				212-14-2014-02:01:00': 102.83333333333333,
-				212-14-2014-02:02:00': 102.83333333333333
-			}
-			'memory': {
-				212-14-2014-02:01:00': 102.83333333333333,
-				212-14-2014-02:02:00': 102.83333333333333
-			}
-		}
-	}
+{
+   "start": "1970-01-01T00:00:00Z",
+   "end": "2014-03-08T04:04:29Z",
+   "resolutionName": "1s",
+   "resolutionInterval": 1,
+   "items": [{
+      "referenceId": "server-0",
+      "series": [
+         {
+            "name": "met1",
+            "values": [
+               {
+                  "timestamp": "2014-03-08T04:01:29Z",
+                  "value": 1
+               },
+               ...
+               {
+                  "timestamp": "2014-03-08T04:02:03Z",
+                  "value": 35
+               }
+            ]
+         },
+         {
+            "name": "met2",
+            "values": [
+               {
+                  "timestamp": "2014-03-08T04:01:29Z",
+                  "value": 120
+               },
+				...
+               {
+                  "timestamp": "2014-03-08T04:02:03Z",
+                  "value": 86
+               }
+            ]
+         }
+      ]
+   }],
+}
 	*/
 	// options might be includeEndDate:true, includeNulls:true
-	Map<String, Map<String, List<Map<String, Object>>>> getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
+	Map getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
 
 	/*   
-		{
-			'server-0': {
-				'cpu': {
-					212-14-2014-02:01:00': {'count':12 'total', 1213455, 'avg': 102.83333333333333},
-					212-14-2014-02:02:00': {'count':12 'total', 1213455, 'avg': 102.83333333333333}
-				}
-				'memory': {
-					212-14-2014-02:01:00': {'count':12 'total', 1213455, 'avg': 102.83333333333333},
-					212-14-2014-02:02:00': {'count':12 'total', 1213455, 'avg': 102.83333333333333}
-				}
-			}
-		}
+{
+   "start": "1970-01-01T00:00:00Z",
+   "resolutionName": "1m",
+   "end": "2014-03-08T04:04:29Z",
+   "resolutionInterval": 60,   
+   "items": [
+      {
+         "referenceId": "testSaveMetricsRegularWithAggregatesWithGet",
+         "series": [
+            {
+               "values": [
+                  {
+                     "count": 32,
+                     "start": "2014-03-08T04:01:00Z",
+                     "sum": 528,
+                     "average": 16.5
+                  },
+                  ...
+                  {
+                     "count": 29,
+                     "start": "2014-03-08T04:03:00Z",
+                     "sum": 3103,
+                     "average": 107
+                  }
+               ],
+               "name": "met1"
+            },
+            {
+               "values": [
+                  {
+                     "count": 32,
+                     "start": "2014-03-08T04:01:00Z",
+                     "sum": 3344,
+                     "average": 104.5
+                  },
+                  ...
+                  {
+                     "count": 29,
+                     "start": "2014-03-08T04:03:00Z",
+                     "sum": 406,
+                     "average": 14
+                  }
+               ],
+               "name": "met2"
+            }
+         ]
+      },
+      {
+         "referenceId": "testSaveMetricsRegularWithAggregatesWithGet2",
+         "series": [
+            {
+               "values": [
+                  {
+                     "count": 32,
+                     "start": "2014-03-08T04:01:00Z",
+                     "sum": 649.4399999999999,
+                     "average": 20.294999999999998
+                  },
+                  ...
+                  {
+                     "count": 29,
+                     "start": "2014-03-08T04:03:00Z",
+                     "sum": 3816.6899999999996,
+                     "average": 131.60999999999999
+                  }
+               ],
+               "name": "met1"
+            },
+            {
+               "values": [
+                  {
+                     "count": 32,
+                     "start": "2014-03-08T04:01:00Z",
+                     "sum": 4113.119999999999,
+                     "average": 128.53499999999997
+                  },
+                  ...
+                  {
+                     "count": 29,
+                     "start": "2014-03-08T04:03:00Z",
+                     "sum": 499.38,
+                     "average": 17.22
+                  }
+               ],
+               "name": "met2"
+            }
+         ]
+      }
+   ]
+}
 	*/
-	Map<String, Map<String, List<Map<String, Object>>>> getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
+	Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
 }

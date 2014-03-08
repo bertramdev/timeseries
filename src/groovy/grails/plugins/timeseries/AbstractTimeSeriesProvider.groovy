@@ -49,7 +49,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			}
 		}
 	*/
-	abstract Map<String, Map<String, List<Map<String, Object>>>> getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
+	abstract Map getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
 
 	/*   
 		{
@@ -82,7 +82,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			}
 		}
 	*/
-	abstract Map<String, Map<String, List<Map<String, Object>>>> getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
+	abstract Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
 
 
 	protected DEFAULT_RESOLUTION = ONE_MINUTE
@@ -209,7 +209,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			def aggs = config.aggregates
 			if (aggs instanceof Map) {
 				aggs.each {k, v->
-					if (SUPPORTED_RESOLUTIONS_SIZE[k] > SUPPORTED_RESOLUTIONS_SIZE[resolution]) {
+					if (SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[k] > SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[resolution]) {
 						b = getStartAndInterval(timestamp, k)
 						if (b) rtn << b
 					}

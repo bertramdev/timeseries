@@ -9,7 +9,7 @@ class TimeSeriesService {
 	def grailsApplication
 	static final DEFAULT_KEY = '__default'
 	private Timer timer = new Timer()
-	private Long manageStorageInterval = 3600000l
+	private Long manageStorageInterval
 	private TimerTask timerTask = new TimerTask() {
 		public void run() {
 			callProviderMethod('manageStorage')
@@ -34,16 +34,24 @@ class TimeSeriesService {
 
 	void destroy() {
 		log.info("shutting down TimeSeriesService...")
-		timer.cancel()
-		timerTask.cancel()
-		callProviderMethod('shutdown')
+		try {
+			timerTask.cancel()
+			timer.cancel()
+		} catch(Throwable t) {
+			log.error(t)
+		}
+		if (grailsApplication.config.grails.plugins.timeseries.manageStorage.containsKey('shutdownHook') && grailsApplication.config.grails.plugins.timeseries.shutdownHook == true) {
+			callProviderMethod('shutdown')
+		}
 		log.info("TimeSeriesService shutdown.")
 	}
 
 	void init() {
-		callProviderMethod('init')
+		if (grailsApplication.config.grails.plugins.timeseries.manageStorage.containsKey('initHook') && grailsApplication.config.grails.plugins.timeseries.initHook == true) {
+			callProviderMethod('init')
+		}
 		if (grailsApplication.config.grails.plugins.timeseries.manageStorage.containsKey('interval')) {
-			this.manageStorageInterval = Long.parseLong(grailsApplication.config.grails.plugins.timeseries.manageStorage.interval)
+			this.manageStorageInterval = Long.parseLong(grailsApplication.config.grails.plugins.timeseries.manageStorage.interval.toString())
 		}
 		// schedule "manageStorage" call to all teh providers
 		if (this.manageStorageInterval) {

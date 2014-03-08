@@ -77,7 +77,7 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 	void testSaveMetricsRegular() {
 		timeSeriesService.flush()
 		def now = new Date()
-		(1..62).each {
+		(1..15).each {
 			//println now
 			grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_SECOND
 			timeSeriesService.saveMetric('testSaveMetricsRegular', 'poop', it, now)
@@ -102,7 +102,7 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 	void testSaveMetricsRegularWithGet() {
 		timeSeriesService.flush()
 		def now = new Date()
-		(1..121).each {
+		(1..35).each {
 			//println now
 			grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_SECOND
 			timeSeriesService.saveMetrics('testSaveMetricsRegularWithGet', ['met1':it, 'met2':(121-it)], now)
@@ -110,6 +110,21 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 		}
 		println new JSON(timeSeriesService.getMetrics(new Date(0), new Date(System.currentTimeMillis() + 180000l))).toString(true)
 	}
+
+	void testSaveMetricsRegularWithAggregatesWithGet() {
+		timeSeriesService.flush()
+		grailsApplication.config.grails.plugins.timeseries.aggregates = ['1m':7]
+		def now = new Date()
+		(1..121).each {
+			//println now
+			grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_SECOND
+			timeSeriesService.saveMetrics('testSaveMetricsRegularWithAggregatesWithGet', ['met1':it, 'met2':(121-it)], now)
+			timeSeriesService.saveMetrics('testSaveMetricsRegularWithAggregatesWithGet2', ['met1':it*1.23, 'met2':(121-it)*1.23], now)
+			now = new Date(now.time + 1000)
+		}
+		println new JSON(timeSeriesService.getMetricAggregates('1m',new Date(0), new Date(System.currentTimeMillis() + 180000l))).toString(true)
+	}
+
 
 }
 
@@ -122,9 +137,9 @@ class TestProvider extends AbstractTimeSeriesProvider {
 	@Override
 	void bulkSaveMetrics(String referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, groovy.util.ConfigObject config) {}
 	@Override
-	Map<String, Map<String, List<Map<String, Object>>>> getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config) {return null}
+	Map getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config) {return null}
 	@Override
-	Map<String, Map<String, List<Map<String, Object>>>> getMetricAggregates(String bucketName, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config) {return null}
+	Map getMetricAggregates(String bucketName, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config) {return null}
 	def test(resolution, now = new Date()) {
 		def conf = new groovy.util.ConfigObject()
 		conf.resolution = resolution
