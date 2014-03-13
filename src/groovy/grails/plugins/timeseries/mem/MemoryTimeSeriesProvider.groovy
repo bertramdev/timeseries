@@ -40,30 +40,34 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 
 	@Override
 	void manageStorage(groovy.util.ConfigObject config) {
-		def expiration = config.containsKey('expiration') ? parseDuration(config.expiration) : DEFAULT_EXPIRATION, // default to a days worth
-			aggExpirations = getAggregateMillisecondExpirations(config),
-			now = System.currentTimeMillis(),
-			oldest = now - expiration,
-			aggOldest
-
-		println '****OLDEST:'+new Date(oldest)
+		def now = System.currentTimeMillis()
 		// age out old data
 		internalData.each {itemKey, db->
 			// remove old measurements
 			def rmv = []
-			db.__m.each {ts, doc->
-				if (oldest > doc.__e.time) {
-					println '>>>REMOVING [' +ts+']'+doc.__s+'-'+doc.__e
-					rmv << ts 
+			db.__m.each {metricName, doc->
+				def expiration = config[metricName].containsKey('expiration') ? parseDuration(config[metricName].expiration) : DEFAULT_EXPIRATION, // default to a days worth
+					oldest = now - expiration
+				println('****OLDEST for '+ metricName + ':'+new Date(oldest))
+				doc.__d.each {ts,doc2->
+					if (oldest > doc2.__e.time) rmv << ts 
 				}
+				rmv.each { doc.__d.remove(it) }
+
 			}
-			rmv.each { db.__m.remove(it) }
 			// remove old aggregates
-			db.__a.each {res, docs->
-				rmv = []
-				aggOldest = now - aggExpirations[res]
-				docs.each {ts, doc-> if (aggOldest > doc.__e.time) rmv << ts }
-				rmv.each { docs.remove(it) }
+			db.__a.each {metricName, doc->
+				def aggExpirations = getAggregateMillisecondExpirations(metricName, config)
+				aggExpirations.each {res, duration->
+					rmv = []
+					def aggOldest = now - duration
+					println('****OLDEST for '+ metricName + ':'+res+ ':'+new Date(aggOldest))
+					doc[res].each {ts, doc2->
+						if (aggOldest > doc2.__e.time) rmv << ts
+					}
+					rmv.each { doc[res].remove(it) }
+
+				}
 			}
 		}			
 		if (this.persist) {
@@ -115,45 +119,51 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 
 	@Override
 	void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, groovy.util.ConfigObject config) {
-		def startAndInterval = getMetricStartAndInterval(timestamp, config),
-			aggregates = getAggregateStartsAndIntervals(timestamp, config)
-		internalData[referenceId] = internalData[referenceId] ?: [__i:((Long)(startAndInterval.interval * 1000)), __r:startAndInterval.resolution,__m:[:].asSynchronized(),__a:[:].asSynchronized()].asSynchronized()
-		def refidData = internalData[referenceId]
-		def storedMetrics = refidData.__m,
-			storedAggregates = refidData.__a
-		storedMetrics[startAndInterval.start] =  storedMetrics[startAndInterval.start] ?: [__s:startAndInterval.start, __n:startAndInterval.count, __e:new Date(startAndInterval.start.time + (startAndInterval.range * 60000))].asSynchronized()
-		def currentMetrics = storedMetrics[startAndInterval.start],
-			prevExists = false,
-			prevValue = 0
+		def startAndInterval,
+			aggregates
+		internalData[referenceId] = internalData[referenceId] ?: [__m:[:].asSynchronized(),__a:[:].asSynchronized()].asSynchronized()
+		def refidData = internalData[referenceId],
+		    storedMetrics = refidData.__m,
+		    storedAggregates = refidData.__a,
+		    currentMetrics,
+		    metricAggregates,
+		    prevExists = false,
+		    prevValue = 0
 		metrics.each {k, v->
+			startAndInterval = getMetricStartAndInterval(k, timestamp, config)
+			storedMetrics[k] =  storedMetrics[k] ?: [__d:[:].asSynchronized(), __i:((Long)(startAndInterval.interval * 1000)), __r:startAndInterval.resolution].asSynchronized()
 			prevExists = false
-			currentMetrics[k] = currentMetrics[k] ?: [__i:0i, __t:0d, __v: new ArrayList(startAndInterval.count).asSynchronized()]
-			if (currentMetrics[k].__v[startAndInterval.interval]) {
+			storedMetrics[k].__d[startAndInterval.start] = storedMetrics[k].__d[startAndInterval.start] ?: [__i:0i, __t:0d, __v: new ArrayList(startAndInterval.count).asSynchronized(),__s:startAndInterval.start, __n:startAndInterval.count, __e:new Date(startAndInterval.start.time + (startAndInterval.range * 60000))]
+			currentMetrics = storedMetrics[k].__d[startAndInterval.start]
+			if (currentMetrics.__v[startAndInterval.interval]) {
 				prevExists = true
-				prevValue = currentMetrics[k].__v[startAndInterval.interval]
-				currentMetrics[k].__i--
-				currentMetrics[k].__t = currentMetrics[k].__t - prevValue
+				prevValue = currentMetrics.__v[startAndInterval.interval]
+				currentMetrics.__i--
+				currentMetrics.__t = currentMetrics.__t - prevValue
 			}
-			currentMetrics[k].__i++
-			currentMetrics[k].__t += v
-			currentMetrics[k].__v[startAndInterval.interval] = v
+			currentMetrics.__i++
+			currentMetrics.__t += v
+			currentMetrics.__v[startAndInterval.interval] = v
+			
+			aggregates = getAggregateStartsAndIntervals(k, timestamp, config)
 			aggregates?.each {agg->
-				storedAggregates[agg.resolution] = storedAggregates[agg.resolution] ?: [:].asSynchronized()
-				def aggRes = storedAggregates[agg.resolution]
-				aggRes[agg.start] = aggRes[agg.start] ?: [__s:agg.start, __n:agg.count, __e:new Date(agg.start.time + (agg.range * 60000))].asSynchronized()
+				storedAggregates[k] = storedAggregates[k] ?: [:].asSynchronized()
+				metricAggregates = storedAggregates[k]
+				metricAggregates[agg.resolution] = metricAggregates[agg.resolution] ?: [:].asSynchronized()
+				def aggRes = metricAggregates[agg.resolution]
+				aggRes[agg.start] = aggRes[agg.start] ?: [__i:0i, __t:0d, __v: new ArrayList(agg.count.intValue()).asSynchronized(), __s:agg.start, __n:agg.count, __e:new Date(agg.start.time + (agg.range * 60000))].asSynchronized()
 				def currentAgg = aggRes[agg.start]
-				currentAgg[k] = currentAgg[k] ?: [__i:0i, __t:0d, __v: new ArrayList(agg.count.intValue()).asSynchronized()]
-				currentAgg[k].__v[agg.interval] = currentAgg[k].__v[agg.interval] ?: [__t:0d,__i:0i]
+				currentAgg.__v[agg.interval] = currentAgg.__v[agg.interval] ?: [__t:0d,__i:0i]
 				if (prevExists) {
 					currentAgg.__i--
-					currentAgg[k].__t = currentAgg[k].__t - prevValue
-					currentAgg[k].__v[agg.interval].__i--
-					currentAgg[k].__v[agg.interval].__t = currentAgg[k].__v[agg.interval].__t.__t - prevValue
+					currentAgg.__t = currentAgg.__t - prevValue
+					currentAgg.__v[agg.interval].__i--
+					currentAgg.__v[agg.interval].__t = currentAgg.__v[agg.interval].__t - prevValue
 				}
-				currentAgg[k].__i++
-				currentAgg[k].__t += v
-				currentAgg[k].__v[agg.interval].__i++
-				currentAgg[k].__v[agg.interval].__t += v
+				currentAgg.__i++
+				currentAgg.__t += v
+				currentAgg.__v[agg.interval].__i++
+				currentAgg.__v[agg.interval].__t += v
 			}
 		}
 	}
@@ -171,13 +181,13 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 			res
 		internalData.each {refId, db->
 			if (referenceIdQuery == null || refId =~ referenceIdQuery) {
-				res = db.__r
 				rtn[refId] = rtn[refId] ?: [:] 
-				db?.__m?.each {timestamp, metrics->
-					def interval = SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[res]
-					if (timestamp > start && timestamp < end) {
-						metrics.each {metricName, map ->
-							if (!metricName.startsWith('__') && (metricNameQuery == null || metricName =~ metricNameQuery)) {
+				db?.__m?.each {metricName, metricsDb->
+					if (metricNameQuery == null || metricName =~ metricNameQuery) {
+						res = metricsDb.__r
+						def interval = SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[res]
+						metricsDb.__d.each {timestamp, map->
+							if (timestamp > start && timestamp < end) {
 								def f = false
 								map.__v.eachWithIndex {v,i->
 									def intervalTimestamp = new Date(timestamp.time + (i*interval))
@@ -191,9 +201,8 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 								}
 							}
 						}
-
 					}
-				}				
+				}
 			}
 		}	
 
@@ -205,22 +214,24 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 			}
 			items << tmp
 		}
-		[resolutionName:res, resolutionInterval:SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[res]/1000, start:start, end:end, items:items]
+		[start:start, end:end, items:items]
 
 	}
 
 	@Override
 	Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config) {
-		def rtn = [:]
+		def rtn = [:],
+		    interval = SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[resolution]
+
 		internalData.each {refId, db->
 			if (referenceIdQuery == null || refId =~ referenceIdQuery) {
 				rtn[refId] = rtn[refId] ?: [:] 
-				def agg = db.__a[resolution]
-				agg?.each {timestamp, metrics->
-					def interval = SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[resolution]
-					if (timestamp > start && timestamp < end) {
-						metrics.each {metricName, map ->
-							if (!metricName.startsWith('__') && (metricNameQuery == null || metricName =~ metricNameQuery)) {
+				def aggs = db.__a
+				aggs?.each {metricName, aggMetrics->
+					if (metricNameQuery == null || metricName =~ metricNameQuery) {
+						def agg = aggMetrics[resolution]
+						agg?.each {timestamp, map->
+							if (timestamp > start && timestamp < end) {
 								def f = false
 								map.__v.eachWithIndex {v,i->
 									def intervalTimestamp = new Date(timestamp.time + (i*interval))
@@ -233,10 +244,9 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 									}
 								}
 							}
-						}
-
+						}				
 					}
-				}				
+				}
 			}
 		}	
 		def items =[]
@@ -247,7 +257,7 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 			}
 			items << tmp
 		}
-		[resolutionName:resolution, resolutionInterval:SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[resolution]/1000, start:start, end:end, items:items]
+		[start:start, end:end, items:items]
 	}
 
 

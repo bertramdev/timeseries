@@ -116,8 +116,8 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 
 	protected DEFAULT_RESOLUTION = ONE_MINUTE
 
-	protected getMetricStartAndInterval(Date timestamp, groovy.util.ConfigObject config) {
-		def resolution = config?.containsKey('resolution') ? config?.resolution : ONE_MINUTE
+	protected getMetricStartAndInterval(String metricName, Date timestamp, groovy.util.ConfigObject config) {
+		def resolution = config[metricName].containsKey('resolution') ? config[metricName].resolution : ONE_MINUTE
 		return getStartAndInterval(timestamp, resolution)
 	}
 
@@ -155,7 +155,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.interval = Math.floor(diffSec / 60).intValue()
 			rtn.range = 3600
 			rtn.count = 60
-		} else if (resolution == FIFTEEN_MINUTES) { // ~96 10m intervals in a 1 day bucket
+		} else if (resolution == FIFTEEN_MINUTES) { // ~96 15m intervals in a 1 day bucket
 			rtn.start.set(Calendar.MINUTE, 0)
 			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			def min = (interval.get(Calendar.HOUR_OF_DAY) * 60) +interval.get(Calendar.MINUTE)
@@ -229,13 +229,13 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 		grails.plugins.timeseries.aggregates = ["{resolution name}": {days to expire}]
 		only thing diff from mterics is that count, sum is tracked for each interval
 	*/
-	protected getAggregateStartsAndIntervals(Date timestamp, groovy.util.ConfigObject config) {
+	protected getAggregateStartsAndIntervals(String metricName, Date timestamp, groovy.util.ConfigObject config) {
 		def rtn = [],
-			resolution = config?.containsKey('resolution') ? config?.resolution : DEFAULT_RESOLUTION,
+			resolution = config[metricName].containsKey('resolution') ? config[metricName].resolution : DEFAULT_RESOLUTION,
 			b
 
-		if (config.containsKey('aggregates')) {
-			def aggs = config.aggregates
+		if (config[metricName].containsKey('aggregates')) {
+			def aggs = config[metricName].aggregates
 			if (aggs instanceof Map) {
 				aggs.each {k, v->
 					if (SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[k] > SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[resolution]) {
@@ -250,10 +250,10 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 		rtn
 	}
 
-	protected getAggregateMillisecondExpirations(groovy.util.ConfigObject config) {
+	protected getAggregateMillisecondExpirations(String metricName, groovy.util.ConfigObject config) {
 		def rtn = [:]
-		if (config.containsKey('aggregates')) {
-			def aggs = config.aggregates
+		if (config[metricName].containsKey('aggregates')) {
+			def aggs = config[metricName].aggregates
 			if (config.containsKey('_aggregateExpirations')) {
 				rtn = config['_aggregateExpirations']
 			} else {

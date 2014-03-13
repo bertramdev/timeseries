@@ -1,7 +1,6 @@
 package grails.plugins.timeseries.mem
 
 import groovy.util.GroovyTestCase
-import grails.plugins.timeseries.mem.MemoryTimeSeriesProvider
 import grails.converters.*
 import grails.plugins.timeseries.*
 
@@ -51,7 +50,7 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 		timeSeriesService.flush()
 		def now = getTestDate()
 		println now
-		grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_SECOND
+		grailsApplication.config.grails.plugins.timeseries.poop.resolution = AbstractTimeSeriesProvider.ONE_SECOND
 		timeSeriesService.saveMetric('testSaveMetrics', 'poop', 100d, now)
 		println timeSeriesService.getProvider()
 	}
@@ -61,7 +60,8 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 		timeSeriesService.flush()
 		def now = getTestDate()
 		println now
-		grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_SECOND
+		grailsApplication.config.grails.plugins.timeseries.poop.resolution = AbstractTimeSeriesProvider.ONE_SECOND
+		grailsApplication.config.grails.plugins.timeseries.poop.aggregates = ['1h':'1d']
 		timeSeriesService.saveMetric('testSaveMetrics', 'poop', 100d, now)
 		println timeSeriesService.getProvider()
 	}
@@ -71,7 +71,7 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 		timeSeriesService.flush()
 		def now = getTestDate()
 		println now
-		grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_SECOND
+		grailsApplication.config.grails.plugins.timeseries.poop.resolution = AbstractTimeSeriesProvider.ONE_SECOND
 		timeSeriesService.saveMetric('testSaveMetricsOverwrite', 'poop', 100d, now)
 		timeSeriesService.saveMetric('testSaveMetricsOverwrite', 'poop', 200d, now)
 		println timeSeriesService.getProvider()
@@ -83,7 +83,7 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 		def now = getTestDate()
 		[11,17,5,7].each {
 			//println now
-			grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_SECOND
+			grailsApplication.config.grails.plugins.timeseries.poop.resolution = AbstractTimeSeriesProvider.ONE_SECOND
 			timeSeriesService.saveMetric('testSaveMetricsIrregular', 'poop', it, now)
 			now = new Date(now.time + (it*1000))
 		}
@@ -95,7 +95,7 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 		def now = getTestDate()
 		(1..15).each {
 			//println now
-			grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_SECOND
+			grailsApplication.config.grails.plugins.timeseries.poop.resolution = AbstractTimeSeriesProvider.ONE_SECOND
 			timeSeriesService.saveMetric('testSaveMetricsRegular', 'poop', it, now)
 			now = new Date(now.time + 1000)
 		}
@@ -103,11 +103,11 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 	}
 	void testSaveMetricsRegularWithAggregates() {
 		timeSeriesService.flush()
-		grailsApplication.config.grails.plugins.timeseries.aggregates = ['1m':7]
+		grailsApplication.config.grails.plugins.timeseries.met1.aggregates = ['1m':'7d']
 		def now = getTestDate()
 		(1..121).each {
 			//println now
-			grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_SECOND
+			grailsApplication.config.grails.plugins.timeseries.met1.resolution = AbstractTimeSeriesProvider.ONE_SECOND
 			timeSeriesService.saveMetric('testSaveMetricsRegularWithAggregates', 'met1', it, now)
 			now = new Date(now.time + 1000)
 		}
@@ -120,7 +120,8 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 		def now = getTestDate()
 		(1..35).each {
 			//println now
-			grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_SECOND
+			grailsApplication.config.grails.plugins.timeseries.met1.resolution = AbstractTimeSeriesProvider.ONE_SECOND
+			grailsApplication.config.grails.plugins.timeseries.met2.resolution = AbstractTimeSeriesProvider.ONE_SECOND
 			timeSeriesService.saveMetrics('testSaveMetricsRegularWithGet', ['met1':it, 'met2':(121-it)], now)
 			now = new Date(now.time + 1000)
 		}
@@ -129,11 +130,13 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 
 	void testSaveMetricsRegularWithAggregatesWithGet() {
 		timeSeriesService.flush()
-		grailsApplication.config.grails.plugins.timeseries.aggregates = ['1m':'7d']
+		grailsApplication.config.grails.plugins.timeseries.met1.aggregates = ['1m':'7d']
+		grailsApplication.config.grails.plugins.timeseries.met2.aggregates = ['1m':'7d']
+		grailsApplication.config.grails.plugins.timeseries.met1.resolution = AbstractTimeSeriesProvider.ONE_SECOND
+		grailsApplication.config.grails.plugins.timeseries.met2.resolution = AbstractTimeSeriesProvider.ONE_SECOND
 		def now = getTestDate()
 		(1..121).each {
 			//println now
-			grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_SECOND
 			timeSeriesService.saveMetrics('testSaveMetricsRegularWithAggregatesWithGet', ['met1':it, 'met2':(121-it)], now)
 			timeSeriesService.saveMetrics('testSaveMetricsRegularWithAggregatesWithGet2', ['met1':it*1.23, 'met2':(121-it)*1.23], now)
 			now = new Date(now.time + 1000)
@@ -143,9 +146,9 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 
 	void testManageStorage() {
 		timeSeriesService.flush()
-		grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_HOUR
-		grailsApplication.config.grails.plugins.timeseries.expiration = '2d'
-		grailsApplication.config.grails.plugins.timeseries.aggregates = ['1d':'2d']
+		grailsApplication.config.grails.plugins.timeseries.met1.resolution = AbstractTimeSeriesProvider.ONE_HOUR
+		grailsApplication.config.grails.plugins.timeseries.met1.expiration = '2d'
+		grailsApplication.config.grails.plugins.timeseries.met1.aggregates = ['1d':'2d']
 		def now = new Date(),
 			old = now - 5,
 			it = 1
@@ -177,13 +180,13 @@ class TestProvider extends AbstractTimeSeriesProvider {
 	Map getMetricAggregates(String bucketName, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config) {return null}
 	def test(resolution, now = new Date()) {
 		def conf = new groovy.util.ConfigObject()
-		conf.resolution = resolution
-		return getMetricStartAndInterval(now, conf)
+		conf.poop.resolution = resolution
+		return getMetricStartAndInterval('poop',now, conf)
 	}
 	def testAggs( now = new Date()) {
 		def conf = new groovy.util.ConfigObject()
-		conf.resolution = '1s'
-		conf.aggregates = ['1m':7, '1h':14, '1d': 90]
-		return getAggregateStartsAndIntervals(now, conf)
+		conf.poop.resolution = '1s'
+		conf.poop.aggregates = ['1m':7, '1h':14, '1d': 90]
+		return getAggregateStartsAndIntervals('poop', now, conf)
 	}
 }
