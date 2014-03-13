@@ -89,8 +89,12 @@ class TimeSeriesService {
 	}
 
 	void flush(providerName = null) {
-		getProvider(providerName).flush()		
+		getProvider(providerName).flush(getConfig())		
 	}
+
+   void manageStorage(providerName = null) {
+      getProvider(providerName).manageStorage(getConfig())    
+   }
 
 	void saveMetric(referenceId, String metricName, Double metricValue, timestamp = new Date(), providerName = null) {
 		saveMetrics(referenceId, ["$metricName":metricValue], timestamp, providerName)

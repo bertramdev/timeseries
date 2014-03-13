@@ -40,6 +40,32 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 
 	@Override
 	void manageStorage(groovy.util.ConfigObject config) {
+		def expiration = config.containsKey('expiration') ? parseDuration(config.expiration) : DEFAULT_EXPIRATION, // default to a days worth
+			aggExpirations = getAggregateMillisecondExpirations(config),
+			now = System.currentTimeMillis(),
+			oldest = now - expiration,
+			aggOldest
+
+		println '****OLDEST:'+new Date(oldest)
+		// age out old data
+		internalData.each {itemKey, db->
+			// remove old measurements
+			def rmv = []
+			db.__m.each {ts, doc->
+				if (oldest > doc.__e.time) {
+					println '>>>REMOVING [' +ts+']'+doc.__s+'-'+doc.__e
+					rmv << ts 
+				}
+			}
+			rmv.each { db.__m.remove(it) }
+			// remove old aggregates
+			db.__a.each {res, docs->
+				rmv = []
+				aggOldest = now - aggExpirations[res]
+				docs.each {ts, doc-> if (aggOldest > doc.__e.time) rmv << ts }
+				rmv.each { docs.remove(it) }
+			}
+		}			
 		if (this.persist) {
 			try {
 				def d1= new File(dataPath)
@@ -91,11 +117,11 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 	void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, groovy.util.ConfigObject config) {
 		def startAndInterval = getMetricStartAndInterval(timestamp, config),
 			aggregates = getAggregateStartsAndIntervals(timestamp, config)
-		internalData[referenceId] = internalData[referenceId] ?: [__r:startAndInterval.resolution,__m:[:].asSynchronized(),__a:[:].asSynchronized()].asSynchronized()
+		internalData[referenceId] = internalData[referenceId] ?: [__i:((Long)(startAndInterval.interval * 1000)), __r:startAndInterval.resolution,__m:[:].asSynchronized(),__a:[:].asSynchronized()].asSynchronized()
 		def refidData = internalData[referenceId]
 		def storedMetrics = refidData.__m,
 			storedAggregates = refidData.__a
-		storedMetrics[startAndInterval.start] =  storedMetrics[startAndInterval.start] ?: [__s:startAndInterval.start, __n:startAndInterval.count, __e:new Date(startAndInterval.start.time + (startAndInterval.range * 1000))].asSynchronized()
+		storedMetrics[startAndInterval.start] =  storedMetrics[startAndInterval.start] ?: [__s:startAndInterval.start, __n:startAndInterval.count, __e:new Date(startAndInterval.start.time + (startAndInterval.range * 60000))].asSynchronized()
 		def currentMetrics = storedMetrics[startAndInterval.start],
 			prevExists = false,
 			prevValue = 0
@@ -114,9 +140,9 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 			aggregates?.each {agg->
 				storedAggregates[agg.resolution] = storedAggregates[agg.resolution] ?: [:].asSynchronized()
 				def aggRes = storedAggregates[agg.resolution]
-				aggRes[agg.start] = aggRes[agg.start] ?: [__s:agg.start, __n:agg.count, __e:new Date(agg.start.time + (agg.range * 1000))].asSynchronized()
+				aggRes[agg.start] = aggRes[agg.start] ?: [__s:agg.start, __n:agg.count, __e:new Date(agg.start.time + (agg.range * 60000))].asSynchronized()
 				def currentAgg = aggRes[agg.start]
-				currentAgg[k] = currentAgg[k] ?: [__i:0i, __t:0d, __v: new ArrayList(agg.count).asSynchronized()]
+				currentAgg[k] = currentAgg[k] ?: [__i:0i, __t:0d, __v: new ArrayList(agg.count.intValue()).asSynchronized()]
 				currentAgg[k].__v[agg.interval] = currentAgg[k].__v[agg.interval] ?: [__t:0d,__i:0i]
 				if (prevExists) {
 					currentAgg.__i--

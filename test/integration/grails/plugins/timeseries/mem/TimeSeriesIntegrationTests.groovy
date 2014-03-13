@@ -129,7 +129,7 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 
 	void testSaveMetricsRegularWithAggregatesWithGet() {
 		timeSeriesService.flush()
-		grailsApplication.config.grails.plugins.timeseries.aggregates = ['1m':7]
+		grailsApplication.config.grails.plugins.timeseries.aggregates = ['1m':'7d']
 		def now = getTestDate()
 		(1..121).each {
 			//println now
@@ -141,6 +141,25 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 		println new JSON(timeSeriesService.getMetricAggregates('1m',new Date(0), new Date(System.currentTimeMillis() + 180000l))).toString(true)
 	}
 
+	void testManageStorage() {
+		timeSeriesService.flush()
+		grailsApplication.config.grails.plugins.timeseries.resolution = AbstractTimeSeriesProvider.ONE_HOUR
+		grailsApplication.config.grails.plugins.timeseries.expiration = '2d'
+		grailsApplication.config.grails.plugins.timeseries.aggregates = ['1d':'2d']
+		def now = new Date(),
+			old = now - 5,
+			it = 1
+		while (true) {
+//			println 'Saving '+old
+			timeSeriesService.saveMetric('testManageStorage', 'met1', it, old)
+			old = new Date(old.time + 3600000l)
+			if (old > now) break
+			it++
+		}
+		println new JSON(timeSeriesService.getMetrics(new Date(0), new Date(System.currentTimeMillis() + 180000l))).toString(true)
+		timeSeriesService.manageStorage()
+		println new JSON(timeSeriesService.getMetrics(new Date(0), new Date(System.currentTimeMillis() + 180000l))).toString(true)
+	}
 
 }
 

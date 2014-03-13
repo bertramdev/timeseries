@@ -13,7 +13,8 @@ interface TimeSeriesProvider {
 	static TWELVE_HOURS = '12h'
 	static ONE_DAY = '1d'
 
-	static SUPPORTED_RESOLUTIONS_INTERVAL_SIZE = ['1s': 1000l, '10s': 10000l, '30s': 30000l, '1m': 60000l, '15m': 750000l, '1h': 3000000l, '2h': 6000000l, '4h': 12000000l, '12h': 36000000l, '1d': 72000000l]
+   // could enhance to allow any arbitrary size
+	static SUPPORTED_RESOLUTIONS_INTERVAL_SIZE = ['1s': 1000l, '10s': 10000l, '30s': 30000l, '1m': 60000l, '15m': 900000l, '1h': 3600000l, '2h': 7200000l, '4h': 14400000l, '12h': 43200000l, '1d': 86400000l]
 
 	String getName()
 

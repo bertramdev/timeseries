@@ -3,14 +3,43 @@ package grails.plugins.timeseries
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsApplicationAware
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.apache.log4j.Logger
+import java.text.*
+import java.util.concurrent.TimeUnit
+import java.util.regex.*
 
 abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsApplicationAware {
 	protected Logger log = Logger.getLogger(getClass())
 	protected GrailsApplication grailsApplication
-
+	static DEFAULT_EXPIRATION = 86400000l
 
 	public AbstractTimeSeriesProvider() {
 
+	}
+
+	private static Pattern p = Pattern.compile("(\\d+)?[dhms]");
+
+	public static Long parseDuration(duration) throws ParseException {
+		if (duration instanceof Long) return duration
+		duration = duration.replaceAll(' ','')
+
+		Matcher m = p.matcher(duration)
+
+		Long milliseconds = 0;
+
+		if (m.find()) {
+			def per = duration[duration.length()-1]
+			int inc = Integer.parseInt(m.group(1))
+
+			if (per == 'd') milliseconds += TimeUnit.MILLISECONDS.convert(inc, TimeUnit.DAYS)
+			else if (per == 'h') milliseconds += TimeUnit.MILLISECONDS.convert(inc, TimeUnit.HOURS)
+			else if (per == 'm') milliseconds += TimeUnit.MILLISECONDS.convert(inc,TimeUnit.MINUTES)
+			else if (per == 's') milliseconds += TimeUnit.MILLISECONDS.convert(inc,TimeUnit.SECONDS)
+			else throw new ParseException("Cannot parse duration " + duration, 0)
+		} else {
+			throw new ParseException("Cannot parse duration " + duration, 0)
+		}
+
+		return milliseconds
 	}
 
 	void setGrailsApplication(GrailsApplication grailsApplication) {
@@ -128,21 +157,21 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.count = 60
 		} else if (resolution == FIFTEEN_MINUTES) { // ~96 10m intervals in a 1 day bucket
 			rtn.start.set(Calendar.MINUTE, 0)
-			rtn.start.set(Calendar.HOUR, 0)
-			def min = (interval.get(Calendar.HOUR) * 60) +interval.get(Calendar.MINUTE)
+			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
+			def min = (interval.get(Calendar.HOUR_OF_DAY) * 60) +interval.get(Calendar.MINUTE)
 			rtn.interval = Math.floor(min / 10).intValue()
 			rtn.range = 1440
 	 		rtn.count = 96
 		} else if (resolution == THIRTY_MINUTES) { // ~48 30m intervals in a 1 day bucket
 			rtn.start.set(Calendar.MINUTE, 0)
-			rtn.start.set(Calendar.HOUR, 0)
-			def min = (interval.get(Calendar.HOUR) * 60) +interval.get(Calendar.MINUTE)
+			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
+			def min = (interval.get(Calendar.HOUR_OF_DAY) * 60) +interval.get(Calendar.MINUTE)
 			rtn.interval = Math.floor(min / 30).intValue()
 			rtn.range = 1440
 			rtn.count = 48
 		} else if (resolution == ONE_HOUR) { // ~48 1h intervals in a 2 day bucket
 			rtn.start.set(Calendar.MINUTE, 0)
-			rtn.start.set(Calendar.HOUR, 0)
+			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			def date = rtn.start.get(Calendar.DATE)
 			date = Math.floor(date / 2).intValue()
 			rtn.start.set(Calendar.DATE, date*2)
@@ -152,7 +181,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.count = 48
 		} else if (resolution == TWO_HOURS) { // ~48 2h intervals in a 4 day bucket
 			rtn.start.set(Calendar.MINUTE, 0)
-			rtn.start.set(Calendar.HOUR, 0)
+			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			def date = rtn.start.get(Calendar.DATE)
 			date = Math.floor(date / 4).intValue()
 			rtn.start.set(Calendar.DATE, date*4)
@@ -162,7 +191,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.count = 48
 		} else if (resolution == FOUR_HOURS) { // ~42 4h intervals in a 7 day bucket
 			rtn.start.set(Calendar.MINUTE, 0)
-			rtn.start.set(Calendar.HOUR, 0)
+			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			def date = rtn.start.get(Calendar.DATE)
 			date = Math.floor(date / 7).intValue()
 			rtn.start.set(Calendar.DATE, date*7)
@@ -173,7 +202,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.count = 42
 		} else if (resolution == TWELVE_HOURS) { // ~60 12h intervals in a 1 month bucket
 			rtn.start.set(Calendar.MINUTE, 0)
-			rtn.start.set(Calendar.HOUR, 0)
+			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			rtn.start.set(Calendar.DATE, 1)
 			def diffMin = (interval.time.time - rtn.start.time.time) / 60000
 			rtn.interval = Math.floor(diffMin / 720).intValue()
@@ -181,7 +210,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.count = rtn.range / 720
 		} else if (resolution == ONE_DAY) { // ~30 24h intervals in a 1 month bucket
 			rtn.start.set(Calendar.MINUTE, 0)
-			rtn.start.set(Calendar.HOUR, 0)
+			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			rtn.start.set(Calendar.DATE, 1)
 			def diffMin = (interval.time.time - rtn.start.time.time) / 60000
 			rtn.interval = Math.floor(diffMin / 1440).intValue()
@@ -220,4 +249,25 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 		}
 		rtn
 	}
+
+	protected getAggregateMillisecondExpirations(groovy.util.ConfigObject config) {
+		def rtn = [:]
+		if (config.containsKey('aggregates')) {
+			def aggs = config.aggregates
+			if (config.containsKey('_aggregateExpirations')) {
+				rtn = config['_aggregateExpirations']
+			} else {
+				if (aggs instanceof Map) {
+					aggs.each {k, v->
+						rtn[k] = parseDuration(v)
+					}
+					config['_aggregateExpirations'] = rtn
+				} else {
+					log.warn('grails.plugins.timeseries.aggregates configuration in invalid')
+				}
+			}
+		}
+		rtn
+	}
+
 }
