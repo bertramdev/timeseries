@@ -19,7 +19,7 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 		c.set( Calendar.YEAR, 2013 )
 		c.set( Calendar.MONTH, Calendar.OCTOBER )
 		c.set( Calendar.DATE, 31 )
-		c.set( Calendar.HOUR, 10 )
+		c.set( Calendar.HOUR_OF_DAY, 22 )
 		c.set( Calendar.SECOND, 31 )
 		c.set( Calendar.MINUTE, 31 )
 		c.set( Calendar.MILLISECOND, 0 )
@@ -36,15 +36,14 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 		assert provider.test('10s', now).interval == 9
 		assert provider.test('30s', now).interval == 3
 		assert provider.test('1m', now).interval == 31
-		println provider.test('15m', now)
 		assert provider.test('15m', now).interval == 90
-		assert provider.test('30m', now).interval == 21
-		assert provider.test('1h', now).interval == 34
-		assert provider.test('2h', now).interval == 41
-		assert provider.test('4h', now).interval == 20
-		assert provider.test('12h', now).interval == 60
+		assert provider.test('30m', now).interval == 45
+		assert provider.test('1h', now).interval == 46
+		assert provider.test('2h', now).interval == 47
+		assert provider.test('4h', now).interval == 23
+		assert provider.test('12h', now).interval == 61
 		assert provider.test('1d', now).interval == 30
-		assert provider.testAggs(now)[0].interval == 31 && provider.testAggs(now)[1].interval == 34 && provider.testAggs(now)[2].interval == 30
+		assert provider.testAggs(now)[0].interval == 31 && provider.testAggs(now)[1].interval == 46 && provider.testAggs(now)[2].interval == 30
 	}
 
 	void testSaveMetrics() {
