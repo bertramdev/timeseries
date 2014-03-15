@@ -244,7 +244,6 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 
 		}
 		rtn.start = rtn.start.time
-		rtn.end = rtn.end.time
 		return rtn.interval != null ? rtn : null
 	}
 
@@ -283,7 +282,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 				log.warn('grails.plugins.timeseries.aggregates configuration in invalid')
 			}
 		}
-		rtn
+		ms
 	}
 
 	protected getAggregateMillisecondExpirations(String metricName, groovy.util.ConfigObject config) {
