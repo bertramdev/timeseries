@@ -151,9 +151,9 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 				metricAggregates = storedAggregates[k]
 				metricAggregates[agg.resolution] = metricAggregates[agg.resolution] ?: [:].asSynchronized()
 				def aggRes = metricAggregates[agg.resolution]
-				aggRes[agg.start] = aggRes[agg.start] ?: [__i:0i, __t:0d, __v: new ArrayList(agg.count.intValue()).asSynchronized(), __s:agg.start, __n:agg.count, __e:new Date(agg.start.time + (agg.range * 60000))].asSynchronized()
+				aggRes[agg.start] = aggRes[agg.start] ?: [__i:0i, __t:0d, __h:null, __l:null, __v: new ArrayList(agg.count.intValue()).asSynchronized(), __s:agg.start, __n:agg.count, __e:new Date(agg.start.time + (agg.range * 60000))].asSynchronized()
 				def currentAgg = aggRes[agg.start]
-				currentAgg.__v[agg.interval] = currentAgg.__v[agg.interval] ?: [__t:0d,__i:0i]
+				currentAgg.__v[agg.interval] = currentAgg.__v[agg.interval] ?: [__t:0d,__i:0i,__h:null,__l:null]
 				if (prevExists) {
 					currentAgg.__i--
 					currentAgg.__t = currentAgg.__t - prevValue
@@ -162,8 +162,12 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 				}
 				currentAgg.__i++
 				currentAgg.__t += v
+				if (currentAgg.__l == null || v < currentAgg.__l) currentAgg.__l = v
+				if (currentAgg.__h == null || v > currentAgg.__h) currentAgg.__h = v
 				currentAgg.__v[agg.interval].__i++
 				currentAgg.__v[agg.interval].__t += v
+				if (currentAgg.__v[agg.interval].__l == null || v < currentAgg.__v[agg.interval].__l) currentAgg.__v[agg.interval].__l = v
+				if (currentAgg.__v[agg.interval].__h == null || v > currentAgg.__v[agg.interval].__h) currentAgg.__v[agg.interval].__h = v
 			}
 		}
 	}
@@ -237,7 +241,7 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 									def intervalTimestamp = new Date(timestamp.time + (i*interval))
 									if (intervalTimestamp > start && (v != null || f)) {
 										rtn[refId][metricName] = rtn[refId][metricName] ?: []
-										def rec = [start:intervalTimestamp, sum:v.__t, count: v.__i, average: (v.__i > 0 ? (v.__t / v.__i) : 0d) ]
+										def rec = [start:intervalTimestamp, sum:v.__t, count: v.__i, max:v.__h, min:v.__l, average: (v.__i > 0 ? (v.__t / v.__i) : 0d) ]
 										if (options?.includeEndDate) rec.e = Date(timestamp.time + (i*interval) + interval)
 										rtn[refId][metricName] << rec
 										f = true
