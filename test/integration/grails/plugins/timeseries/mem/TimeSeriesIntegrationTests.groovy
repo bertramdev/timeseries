@@ -36,7 +36,8 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 		assert provider.test('10s', now).interval == 9
 		assert provider.test('30s', now).interval == 3
 		assert provider.test('1m', now).interval == 31
-		assert provider.test('15m', now).interval == 63
+		println provider.test('15m', now)
+		assert provider.test('15m', now).interval == 90
 		assert provider.test('30m', now).interval == 21
 		assert provider.test('1h', now).interval == 34
 		assert provider.test('2h', now).interval == 41

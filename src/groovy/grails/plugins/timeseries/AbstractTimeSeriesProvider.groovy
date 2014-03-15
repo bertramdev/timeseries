@@ -169,7 +169,8 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			rtn.end = new Date(rtn.start.time.time + 86400000l)
 			def min = (interval.get(Calendar.HOUR_OF_DAY) * 60) +interval.get(Calendar.MINUTE)
-			rtn.interval = Math.floor(min / 10).intValue()
+			println min
+			rtn.interval = Math.floor(min / 15).intValue()
 			rtn.range = 1440
 	 		rtn.count = 96
 		} else if (resolution == THIRTY_MINUTES) { // ~48 30m intervals in a 1 day bucket
