@@ -57,6 +57,105 @@ Use the `saveMetric`, `saveMetrics`,  and `bulkSaveMetrics` methods to write tim
 
 The optional `providerName` is the name of the time series data storage implementation provider.
 
+Use the `getMetrics` and `getMetricAggregates` methods of `timeSeriesSerice` to read time series data.
+
+```java
+    Map getMetrics(Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, Map<String, Object> options = null, providerName = null)
+    Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null,Map<String, Object> options = null,  providerName = null)
+```
+The specific syntax of the referenceIdQuery and metricNameQuery depend on the storage provider. Regular expressions can be used for the in-memory and MongoDB implementations. A SQL like expression can be used for the GORM implementation. The Elastic Search implementation supports the ES query string query syntax.
+
+The structures returned by the service read method follow a grammar intended to by compatible with JavaScript charting libraries. A time-series-charts plugin is TBD.
+
+Sample return value from `getMetrics` in JSON:
+
+```javascript
+{
+   "items": [{
+      "series": [{
+         "values": [
+            {
+               "timestamp": "2013-10-31T17:31:31Z",
+               "value": 1
+            },
+            {
+               "timestamp": "2013-10-31T17:31:32Z",
+               "value": 2
+            },
+            ...
+            {
+               "timestamp": "2013-10-31T17:31:45Z",
+               "value": 15
+            }
+         ],
+         "name": "myMetric"
+      }],
+      "referenceId": "server-01"
+   }],
+   "start": "1970-01-01T00:00:00Z", 
+   "end": "2014-03-15T16:02:08Z"
+}
+```
+
+Sample return value from `getMetricAggregates` in JSON:
+
+```javascript
+{
+   "items": [{
+      "series": [
+         {
+            "values": [
+               {
+                  "min": 1,
+                  "max": 29,
+                  "count": 29,
+                  "start": "2013-10-31T17:31:00Z",
+                  "sum": 435,
+                  "average": 15
+               },
+               ...
+               {
+                  "min": 90,
+                  "max": 121,
+                  "count": 32,
+                  "start": "2013-10-31T17:33:00Z",
+                  "sum": 3376,
+                  "average": 105.5
+               }
+            ],
+            "name": "myMetric"
+         },
+         {
+            "values": [
+               {
+                  "min": 92,
+                  "max": 120,
+                  "count": 29,
+                  "start": "2013-10-31T17:31:00Z",
+                  "sum": 3074,
+                  "average": 106
+               },
+               ...
+               {
+                  "min": 0,
+                  "max": 31,
+                  "count": 32,
+                  "start": "2013-10-31T17:33:00Z",
+                  "sum": 496,
+                  "average": 15.5
+               }
+            ],
+            "name": "myOtherMetric"
+         }
+      ],
+      "referenceId": "server-01"
+   }],
+   "start": "1970-01-01T00:00:00Z",
+   "end": "2014-03-15T16:02:17Z"
+}
+```
+
+
 Custom time series data storage providers can be created by implementing the TimeSeriesProvider interface:
 
 ```java
