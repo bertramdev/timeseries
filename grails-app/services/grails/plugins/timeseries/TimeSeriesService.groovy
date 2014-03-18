@@ -37,19 +37,14 @@ class TimeSeriesService {
 		try {
 			timerTask.cancel()
 			timer.cancel()
+         callProviderMethod('shutdown')
 		} catch(Throwable t) {
 			log.error(t)
-		}
-		if (grailsApplication.config.grails.plugins.timeseries.manageStorage.containsKey('shutdownHook') && grailsApplication.config.grails.plugins.timeseries.shutdownHook == true) {
-			callProviderMethod('shutdown')
 		}
 		log.info("TimeSeriesService shutdown.")
 	}
 
 	void init() {
-		if (grailsApplication.config.grails.plugins.timeseries.manageStorage.containsKey('initHook') && grailsApplication.config.grails.plugins.timeseries.initHook == true) {
-			callProviderMethod('init')
-		}
 		if (grailsApplication.config.grails.plugins.timeseries.manageStorage.containsKey('interval')) {
 			this.manageStorageInterval = Long.parseLong(grailsApplication.config.grails.plugins.timeseries.manageStorage.interval.toString())
 		}
@@ -57,6 +52,7 @@ class TimeSeriesService {
 		if (this.manageStorageInterval) {
 			timer.scheduleAtFixedRate(timerTask, this.manageStorageInterval, this.manageStorageInterval)
 		}
+      callProviderMethod('init')
 	}
 
 	void registerProvider(TimeSeriesProvider provider, Boolean setAsDefault = true) {
