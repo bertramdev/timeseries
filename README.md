@@ -193,6 +193,8 @@ interface TimeSeriesProvider {
 
 The `options` parameter can be used to implement behavior that is specific to a provider.
 
+***NOTE:*** To maintain the pluggability of storage providers it is the provider's responsibility to return data that follows the structure described above.
+
 The provider must be registered to be available in the service. This can be done in BootStrap or the doWithApplicationContext plugin event handler.
 
 ```java
