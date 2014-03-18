@@ -1,7 +1,7 @@
-timeseries
-==========
+TimeSeries Grail Plugin
+=======================
 
-Grails Plugin for read/write of timeseries data. Defines interface for pluggable storage providers and includes an in-memory storage provider.
+Grails Plugin for read/write of timeseries data. Defines interface for pluggable storage providers and includes an in-memory storage provider. See also [timeseries-elastic-search](https://github.com/bertramdev/timeseries-elastic-search) and [timeseries-gorm](https://github.com/bertramdev/timeseries-gorm)
 
 A time series is a sequence of data points, measured typically at successive points in time spaced at uniform time intervals. Database stats, JVM stats, and network stats are examples of time series data. 
 
