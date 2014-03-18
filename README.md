@@ -23,7 +23,7 @@ Values for each time series metric are stored at a configurable resolution (how 
 * TWELVE HOURS = '12h'
 * ONE DAY = '1d'
 
-Values for each time series metric also have a configurable expiration. Expiration can be any duration that uses the string syntax of a number followed by 's','m','h', or 'd'.
+Values for each time series metric also have a configurable expiration. Expiration can be any duration that uses the string syntax of a number followed by 's','m','h', or 'd'. A future release may support arbitrary resolutions.
 
 The resolution and expiration for each "metric" is configured in Config.groovy
 
@@ -70,7 +70,7 @@ Map getMetricAggregates(String resolution, Date start, Date end, String referenc
 ```
 The specific syntax of the referenceIdQuery and metricNameQuery depend on the storage provider. Regular expressions can be used for the in-memory and MongoDB implementations. A SQL like expression can be used for the GORM implementation. The Elastic Search implementation supports the ES query string query syntax.
 
-The structures returned by the service read method follow a grammar intended to by compatible with JavaScript charting libraries. A time-series-charts plugin is TBD.
+The structures returned by the service read methods follow a grammar intended to be compatible with JavaScript charting libraries. A time-series-charts plugin is TBD.
 
 Sample return value from `getMetrics` in JSON:
 
