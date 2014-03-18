@@ -3,7 +3,7 @@ timeseries
 
 Grails Plugin for read/write of timeseries data. Defines interface for pluggable storage providers and includes an in-memory storage provider.
 
-A time series is a sequence of data points, measured typically at successive points in time spaced at uniform time intervals. Database stats, JVM stats, and network stats are examples of time series data.
+A time series is a sequence of data points, measured typically at successive points in time spaced at uniform time intervals. Database stats, JVM stats, and network stats are examples of time series data. 
 
 In this plugin time series data is associated with an abitrary string "reference id". This can be a IP address, server name, device id or other unique identifier.
 
@@ -34,7 +34,17 @@ grails.plugins.timeseries.myMetric.expiration = '1d'
 
 The default resolution is 1m and the default expiration is 1d.
 
-The `timeSeriesService` provides methods for reading and writing time series data. Use the `saveMetric`, `saveMetrics`,  and `bulkSaveMetrics` methods to store time series data.
+The time series data is often reported as date histograms. Data points are aggregated and bucketed in time intervals. Depending on the storage provider, configuration of histograms may be required via Config.groovy (in-memory, Redis, GORM and Mongo) or can be determined at runtime (Elastic Search).
+
+To configure aggregation of histogram data you must specify the resolutions and associated expiration in a map with the key being the resolution and the value being the expiration:
+
+```java
+    grails.plugins.timeseries.poop.aggregates = ['1h':'1d','1d':'60d']
+```
+
+The `timeSeriesService` provides methods for reading and writing time series data. 
+
+Use the `saveMetric`, `saveMetrics`,  and `bulkSaveMetrics` methods to write time series data.
 
 ```java
     // save one data point for one moment in time(i.e. CPU utilization)
@@ -42,8 +52,10 @@ The `timeSeriesService` provides methods for reading and writing time series dat
     // save multiple data points for one moment in time (i.e. CPU utilization, Memory usage)
     void saveMetrics(referenceId, Map<String, Double> metrics, timestamp = new Date(), providerName = null)
     // save multiple data points for multiple moments in time
-	  void bulkSaveMetrics(referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, providerName = null)
+    void bulkSaveMetrics(referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, providerName = null)
 ```
+
+The optional `providerName` is the name of the time series data storage implementation provider.
 
 Custom time series data storage providers can be created by implementing the TimeSeriesProvider interface:
 
