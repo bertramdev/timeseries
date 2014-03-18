@@ -24,9 +24,6 @@ The Grails Timeseries Plugin provides a simplified service for reading/writing t
 	// Details of company behind the plugin (if there is one)
 	def organization = [ name: "BertramLabs", url: "http://www.bertramlabs.com/" ]
 
-	// Any additional developers beyond the author specified above.
-	def developers = [ [ name: "Jeremy Leng", email: "jleng@bcap.com" ]]
-
 	// Location of the plugin's issue tracker.
 	def issueManagement = [ system: "GIT", url: "https://github.com/bertramdev/timeseries.git" ]
 
