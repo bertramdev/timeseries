@@ -42,7 +42,12 @@ To configure aggregation of histogram data you must specify the resolutions and 
     grails.plugins.timeseries.myMetric.aggregates = ['1h':'1d','1d':'60d']
 ```
 
-The `timeSeriesService` provides methods for reading and writing time series data. 
+The `timeSeriesService` provides methods for reading and writing time series data. Follow the Grails conventions for auto-wiring the service.
+
+```java
+    def timeSeriesService
+```
+
 
 Use the `saveMetric`, `saveMetrics`,  and `bulkSaveMetrics` methods to write time series data.
 
