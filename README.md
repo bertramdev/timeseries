@@ -23,7 +23,9 @@ Values for each time series metric are stored at a configurable resolution (how 
 * TWELVE HOURS = '12h'
 * ONE DAY = '1d'
 
-Values for each time series metric also have a configurable expiration. Expiration can be any duration that uses the string syntax of a number followed by 's','m','h', or 'd'. A future release may support arbitrary resolutions.
+A future release may support arbitrary resolutions.
+
+Values for each time series metric also have a configurable expiration. Expiration can be any duration that uses the string syntax of a number followed by 's','m','h', or 'd'. 
 
 The resolution and expiration for each "metric" is configured in Config.groovy
 
