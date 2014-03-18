@@ -1,5 +1,5 @@
-TimeSeries Grail Plugin
-=======================
+TimeSeries Grails Plugin
+========================
 
 Grails Plugin for read/write of timeseries data. Defines interface for pluggable storage providers and includes an in-memory storage provider. See also [timeseries-elastic-search](https://github.com/bertramdev/timeseries-elastic-search) and [timeseries-gorm](https://github.com/bertramdev/timeseries-gorm)
 
