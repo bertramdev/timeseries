@@ -160,6 +160,18 @@ Sample return value from `getMetricAggregates` in JSON:
 }
 ```
 
+The in-memory storage provider supports serializing data to disk with the following configurations in Config.groovy:
+
+```java
+    grails.plugins.timeseries.providers.mem.persist = true
+    grails.plugins.timeseries.providers.mem.storagePath = '/var/data/timeseries'
+```
+
+The expiration of data depends on the the storage provider. Some providers (GORM, in-memory, MongoDB) will run periodic routines to purge expired data by deleting records or dropping collections. Some providers (Redis, Elastic Search) expire data automatically. When applicable, you can configure the frequency of data purging with the following configuration in Config.groovy:
+
+```java
+grails.plugins.timeseries.manageStorage.interval=3600000l //ms
+```
 
 Custom time series data storage providers can be created by implementing the TimeSeriesProvider interface:
 
