@@ -179,3 +179,5 @@ timeSeriesService.registerProvider(new grails.plugins.timeseries.gorm.GORMTimeSe
 ```
 
 The last provider that is registered becomes the default provider.
+
+The provider can extend `grails.plugins.timeseries.AbstractTimeSeriesProvider` to pick up some useful behavior.
