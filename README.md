@@ -191,6 +191,8 @@ interface TimeSeriesProvider {
 }
 ```    
 
+The `options` parameter can be used to implement behavior that is specific to a provider.
+
 The provider must be registered to be available in the service. This can be done in BootStrap or the doWithApplicationContext plugin event handler.
 
 ```java
