@@ -55,9 +55,9 @@ Use the `saveMetric`, `saveMetrics`,  and `bulkSaveMetrics` methods to write tim
 
 ```java
 // save one data point for one moment in time(i.e. CPU utilization)
-void saveMetric(referenceId, String metricName, Double metricValue, timestamp = new Date(), providerName = null)
+void saveMetric(referenceId, String metricName, Double metricValue, Date timestamp = new Date(), providerName = null)
 // save multiple data points for one moment in time (i.e. CPU utilization, Memory usage)
-void saveMetrics(referenceId, Map<String, Double> metrics, timestamp = new Date(), providerName = null)
+void saveMetrics(referenceId, Map<String, Double> metrics, Date timestamp = new Date(), providerName = null)
 // save multiple data points for multiple moments in time
 void bulkSaveMetrics(referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, providerName = null)
 ```
