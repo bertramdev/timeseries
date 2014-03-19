@@ -1,11 +1,12 @@
 package grails.plugins.timeseries.mem
 
-import grails.plugins.timeseries.*
-import grails.converters.*
+import grails.converters.JSON
+import grails.plugins.timeseries.AbstractTimeSeriesProvider
 import groovy.transform.PackageScope
+
 /*
 data model for this provider is really a model for a document-based storage provider
-it would be more efficient to store data in a less structured form in a SortedMap kind of thing  
+it would be more efficient to store data in a less structured form in a SortedMap kind of thing
 */
 class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 
@@ -14,12 +15,11 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 	private String dataPath
 	private Boolean persist
 
-	public MemoryTimeSeriesProvider() {
+	MemoryTimeSeriesProvider() {
 		this(true, null)
 	}
 
-	public MemoryTimeSeriesProvider(Boolean persist, String dataPath) {
-		super()
+	MemoryTimeSeriesProvider(Boolean persist, String dataPath) {
 		this.dataPath = (dataPath ?: "data")
 		this.persist = persist != false
 		this.dataPath = this.dataPath.endsWith('/') ? this.dataPath : (this.dataPath + '/')
@@ -30,17 +30,17 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 				internalData = (Map) inp.readObject()
 				inp.close()
 				fileIn.close()
-			} catch (java.io.FileNotFoundException f) {
+			} catch (FileNotFoundException f) {
 			} catch(Exception i) {
-				i.printStackTrace()
-			} 
+				log.error(i.message, i)
+			}
 		}
 		internalData = internalData ?: [:].asSynchronized()
 	}
 
 	@Override
-	void manageStorage(groovy.util.ConfigObject config) {
-		def now = System.currentTimeMillis()
+	void manageStorage(ConfigObject config) {
+		long now = System.currentTimeMillis()
 		// age out old data
 		internalData.each {itemKey, db->
 			// remove old measurements
@@ -50,7 +50,7 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 					oldest = now - expiration
 				println('****OLDEST for '+ metricName + ':'+new Date(oldest))
 				doc.__d.each {ts,doc2->
-					if (oldest > doc2.__e.time) rmv << ts 
+					if (oldest > doc2.__e.time) rmv << ts
 				}
 				rmv.each { doc.__d.remove(it) }
 
@@ -66,44 +66,35 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 						if (aggOldest > doc2.__e.time) rmv << ts
 					}
 					rmv.each { doc[res].remove(it) }
-
 				}
 			}
-		}			
+		}
 		if (this.persist) {
 			try {
-				def d1= new File(dataPath)
-				d1.mkdir() 
-				FileOutputStream fileOut = new FileOutputStream(dataPath + 'MemoryTimeSeriesProvider.ser')
+				File d1 = new File(dataPath)
+				d1.mkdir()
+				OutputStream fileOut = new FileOutputStream(dataPath + 'MemoryTimeSeriesProvider.ser')
 				ObjectOutputStream out = new ObjectOutputStream(fileOut)
 				out.writeObject(internalData)
 				out.close()
 				fileOut.close()
 			} catch(IOException i) {
-				log.error(i)
-				i.printStackTrace()
-			}		
+				log.error(i.message, i)
+			}
 		}
 	}
 
 	@Override
-	void init(groovy.util.ConfigObject config) {
-
-	}
-
-	@Override
-	void shutDown(groovy.util.ConfigObject config) {
+	void shutDown(ConfigObject config) {
 		manageStorage(config)
 	}
 
 	@Override
-	void flush(groovy.util.ConfigObject config) {
+	void flush(ConfigObject config) {
 		internalData.clear()
 		manageStorage(config)
 	}
 
-
-	@Override
 	String getName() {
 		return 'memory'
 	}
@@ -117,8 +108,7 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 		}
 	}
 
-	@Override
-	void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, groovy.util.ConfigObject config) {
+	void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, ConfigObject config) {
 		def startAndInterval,
 			aggregates
 		internalData[referenceId] = internalData[referenceId] ?: [__m:[:].asSynchronized(),__a:[:].asSynchronized()].asSynchronized()
@@ -144,7 +134,7 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 			currentMetrics.__i++
 			currentMetrics.__t += v
 			currentMetrics.__v[startAndInterval.interval] = v
-			
+
 			aggregates = getAggregateStartsAndIntervals(k, timestamp, config)
 			aggregates?.each {agg->
 				storedAggregates[k] = storedAggregates[k] ?: [:].asSynchronized()
@@ -172,20 +162,18 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 		}
 	}
 
-	@Override
-	void bulkSaveMetrics(String referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, groovy.util.ConfigObject config) {
+	void bulkSaveMetrics(String referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, ConfigObject config) {
 		metricsByTime.each {timestamp, metrics->
 			saveMetrics(referenceId, metrics, timestamp, config)
 		}
 	}
 
-	@Override
-	Map getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config) {
+	Map getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, ConfigObject config) {
 		def rtn = [:],
 			res
 		internalData.each {refId, db->
 			if (referenceIdQuery == null || refId =~ referenceIdQuery) {
-				rtn[refId] = rtn[refId] ?: [:] 
+				rtn[refId] = rtn[refId] ?: [:]
 				db?.__m?.each {metricName, metricsDb->
 					if (metricNameQuery == null || metricName =~ metricNameQuery) {
 						res = metricsDb.__r
@@ -208,7 +196,7 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 					}
 				}
 			}
-		}	
+		}
 
 		def items =[]
 		rtn.each {k, v->
@@ -222,14 +210,13 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 
 	}
 
-	@Override
-	Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config) {
+	Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, ConfigObject config) {
 		def rtn = [:],
 		    interval = SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[resolution]
 
 		internalData.each {refId, db->
 			if (referenceIdQuery == null || refId =~ referenceIdQuery) {
-				rtn[refId] = rtn[refId] ?: [:] 
+				rtn[refId] = rtn[refId] ?: [:]
 				def aggs = db.__a
 				aggs?.each {metricName, aggMetrics->
 					if (metricNameQuery == null || metricName =~ metricNameQuery) {
@@ -248,11 +235,11 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 									}
 								}
 							}
-						}				
+						}
 					}
 				}
 			}
-		}	
+		}
 		def items =[]
 		rtn.each {k, v->
 			def tmp = [referenceId: k, series:[]]
@@ -263,6 +250,4 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 		}
 		[start:start, end:end, items:items]
 	}
-
-
 }

@@ -3,7 +3,7 @@ TimeSeries Grails Plugin
 
 Grails Plugin for read/write of timeseries data. Defines interface for pluggable storage providers and includes an in-memory storage provider. See also [timeseries-elastic-search](https://github.com/bertramdev/timeseries-elastic-search) and [timeseries-gorm](https://github.com/bertramdev/timeseries-gorm)
 
-A time series is a sequence of data points, measured typically at successive points in time spaced at uniform time intervals. Database stats, JVM stats, and network stats are examples of time series data. 
+A time series is a sequence of data points, measured typically at successive points in time spaced at uniform time intervals. Database stats, JVM stats, and network stats are examples of time series data.
 
 In this plugin time series data is associated with an abitrary string "reference id". This can be a IP address, server name, device id or other unique identifier.
 
@@ -25,7 +25,7 @@ Values for each time series metric are stored at a configurable resolution (how 
 
 A future release may support arbitrary resolutions.
 
-Values for each time series metric also have a configurable expiration. Expiration can be any duration that uses the string syntax of a number followed by 's','m','h', or 'd'. 
+Values for each time series metric also have a configurable expiration. Expiration can be any duration that uses the string syntax of a number followed by 's','m','h', or 'd'.
 
 The resolution and expiration for each "metric" is configured in Config.groovy
 
@@ -55,7 +55,7 @@ Use the `saveMetric`, `saveMetrics`,  and `bulkSaveMetrics` methods to write tim
 
 ```java
 // save one data point for one moment in time(i.e. CPU utilization)
-void saveMetric(referenceId, String metricName, Double metricValue, timestamp = new Date(), providerName = null) 
+void saveMetric(referenceId, String metricName, Double metricValue, timestamp = new Date(), providerName = null)
 // save multiple data points for one moment in time (i.e. CPU utilization, Memory usage)
 void saveMetrics(referenceId, Map<String, Double> metrics, timestamp = new Date(), providerName = null)
 // save multiple data points for multiple moments in time
@@ -99,7 +99,7 @@ Sample return value from `getMetrics` in JSON:
       }],
       "referenceId": "server-01"
    }],
-   "start": "1970-01-01T00:00:00Z", 
+   "start": "1970-01-01T00:00:00Z",
    "end": "2014-03-15T16:02:08Z"
 }
 ```
@@ -180,16 +180,16 @@ Custom time series data storage providers can be created by implementing the Tim
 ```java
 interface TimeSeriesProvider {
     String getName()
-    void flush(groovy.util.ConfigObject config) 
-    void init(groovy.util.ConfigObject config) 
-    void shutdown(groovy.util.ConfigObject config) 
-    void manageStorage(groovy.util.ConfigObject config) 
-    void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, groovy.util.ConfigObject config)
-    void bulkSaveMetrics(String referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, groovy.util.ConfigObject config)
-    Map getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
-    Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
+    void flush(ConfigObject config)
+    void init(ConfigObject config)
+    void shutdown(ConfigObject config)
+    void manageStorage(ConfigObject config)
+    void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, ConfigObject config)
+    void bulkSaveMetrics(String referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, ConfigObject config)
+    Map getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, ConfigObject config)
+    Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, ConfigObject config)
 }
-```    
+```
 
 The `options` parameter can be used to implement behavior that is specific to a provider.
 

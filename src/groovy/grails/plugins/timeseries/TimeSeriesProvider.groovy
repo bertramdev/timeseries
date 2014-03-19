@@ -1,36 +1,36 @@
 package grails.plugins.timeseries
- 
+
 interface TimeSeriesProvider {
-   static ONE_SECOND = '1s'
-   static TEN_SECONDS = '10s'
-   static THIRTY_SECONDS = '30s'
-   static ONE_MINUTE = '1m'
-   static FIFTEEN_MINUTES = '15m'
-   static THIRTY_MINUTES = '30m'
-   static ONE_HOUR = '1h'
-   static TWO_HOURS = '2h'
-   static FOUR_HOURS = '4h'
-   static TWELVE_HOURS = '12h'
-   static ONE_DAY = '1d'
+   String ONE_SECOND = '1s'
+   String TEN_SECONDS = '10s'
+   String THIRTY_SECONDS = '30s'
+   String ONE_MINUTE = '1m'
+   String FIFTEEN_MINUTES = '15m'
+   String THIRTY_MINUTES = '30m'
+   String ONE_HOUR = '1h'
+   String TWO_HOURS = '2h'
+   String FOUR_HOURS = '4h'
+   String TWELVE_HOURS = '12h'
+   String ONE_DAY = '1d'
 
    // could enhance to allow any arbitrary size
-   static SUPPORTED_RESOLUTIONS_INTERVAL_SIZE = ['1s': 1000l, '10s': 10000l, '30s': 30000l, '1m': 60000l, '15m': 900000l, '1h': 3600000l, '2h': 7200000l, '4h': 14400000l, '12h': 43200000l, '1d': 86400000l]
+   Map<String, Long> SUPPORTED_RESOLUTIONS_INTERVAL_SIZE = ['1s': 1000l, '10s': 10000l, '30s': 30000l, '1m': 60000l, '15m': 900000l, '1h': 3600000l, '2h': 7200000l, '4h': 14400000l, '12h': 43200000l, '1d': 86400000l]
 
    String getName()
 
-   void flush(groovy.util.ConfigObject config) 
+   void flush(ConfigObject config)
 
-   void init(groovy.util.ConfigObject config) 
+   void init(ConfigObject config)
 
-   void shutdown(groovy.util.ConfigObject config) 
+   void shutdown(ConfigObject config)
 
-   void manageStorage(groovy.util.ConfigObject config) 
+   void manageStorage(ConfigObject config)
 
-   void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, groovy.util.ConfigObject config)
+   void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, ConfigObject config)
 
-   void bulkSaveMetrics(String referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, groovy.util.ConfigObject config)
+   void bulkSaveMetrics(String referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, ConfigObject config)
 
-   /*   
+   /*
 {
    "start": "1970-01-01T00:00:00Z",
    "end": "2014-03-08T04:04:29Z",
@@ -72,14 +72,14 @@ interface TimeSeriesProvider {
 }
    */
    // options might be includeEndDate:true, includeNulls:true
-   Map getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
+   Map getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, ConfigObject config)
 
-   /*   
+   /*
 {
    "start": "1970-01-01T00:00:00Z",
    "resolutionName": "1m",
    "end": "2014-03-08T04:04:29Z",
-   "resolutionInterval": 60,   
+   "resolutionInterval": 60,
    "items": [
       {
          "referenceId": "testSaveMetricsRegularWithAggregatesWithGet",
@@ -166,5 +166,5 @@ interface TimeSeriesProvider {
    ]
 }
    */
-   Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config)
+   Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, ConfigObject config)
 }
