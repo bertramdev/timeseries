@@ -1,22 +1,22 @@
 package grails.plugins.timeseries
 
-import grails.transaction.Transactional
-import grails.plugins.timeseries.*
-
-@Transactional
 class TimeSeriesService {
-	private Map<String, TimeSeriesProvider> providers = [:]
+
+	static final String DEFAULT_KEY = '__default'
+
 	def grailsApplication
-	static final DEFAULT_KEY = '__default'
+
+	private Map<String, TimeSeriesProvider> providers = [:]
 	private Timer timer = new Timer()
 	private Long manageStorageInterval
+
 	private TimerTask timerTask = new TimerTask() {
-		public void run() {
+		void run() {
 			callProviderMethod('manageStorage')
 		}
 	}
 
-	public TimeSeriesService() {
+	TimeSeriesService() {
 		log.debug('TimeSeriesService constructed')
 	}
 
@@ -24,10 +24,10 @@ class TimeSeriesService {
 		providers.each {k, provider->
 			try {
 				// @TODO need to spin up some new threads for this?
-				log.debug('Calling '+m+' on timeseries provider '+k)
+				log.debug("Calling $m on timeseries provider $k")
 				provider."$m"(getConfig())
 			} catch(Throwable t) {
-				log.error(t)
+				log.error(t.message, t)
 			}
 		}
 	}
@@ -39,72 +39,69 @@ class TimeSeriesService {
 			timer.cancel()
          callProviderMethod('shutdown')
 		} catch(Throwable t) {
-			log.error(t)
+			log.error(t.message, t)
 		}
 		log.info("TimeSeriesService shutdown.")
 	}
 
 	void init() {
-		if (grailsApplication.config.grails.plugins.timeseries.manageStorage.containsKey('interval')) {
-			this.manageStorageInterval = Long.parseLong(grailsApplication.config.grails.plugins.timeseries.manageStorage.interval.toString())
+		if (getConfig().manageStorage.containsKey('interval')) {
+			manageStorageInterval = getConfig().manageStorage.interval.toString() as Long
 		}
-		// schedule "manageStorage" call to all teh providers
-		if (this.manageStorageInterval) {
-			timer.scheduleAtFixedRate(timerTask, this.manageStorageInterval, this.manageStorageInterval)
+		// schedule "manageStorage" call to all the providers
+		if (manageStorageInterval) {
+			timer.scheduleAtFixedRate(timerTask, manageStorageInterval, manageStorageInterval)
 		}
       callProviderMethod('init')
 	}
 
-	void registerProvider(TimeSeriesProvider provider, Boolean setAsDefault = true) {
+	void registerProvider(TimeSeriesProvider provider, boolean setAsDefault = true) {
 		providers[provider.name] = provider
-		// last one in 
+		// last one in
 		if (setAsDefault) providers[DEFAULT_KEY] = provider
 	}
-
 
 	void unregisterProvider(String name) {
 		try {
 			providers[provider.name].shutdown()
 		} catch(Throwable t) {
-			log.error(t)
+			log.error(t.message, t)
 		}
 		def old = providers.remove(name)
 		if (providers[DEFAULT_KEY] == old) {
 			providers[DEFAULT_KEY] = providers.values()[0]
 		}
-
 	}
 
-	groovy.util.ConfigObject getConfig() {
+	ConfigObject getConfig() {
 		grailsApplication.config.grails.plugins.timeseries
 	}
 
-	TimeSeriesProvider getProvider(providerName = DEFAULT_KEY) {
-		providerName = providerName ?: DEFAULT_KEY
-		return  providers[providerName]
+	TimeSeriesProvider getProvider(String providerName = DEFAULT_KEY) {
+		return providers[providerName ?: DEFAULT_KEY]
 	}
 
-	void flush(providerName = null) {
-		getProvider(providerName).flush(getConfig())		
+	void flush(String providerName = null) {
+		getProvider(providerName).flush(getConfig())
 	}
 
-   void manageStorage(providerName = null) {
-      getProvider(providerName).manageStorage(getConfig())    
+   void manageStorage(String providerName = null) {
+      getProvider(providerName).manageStorage(getConfig())
    }
 
-	void saveMetric(referenceId, String metricName, Double metricValue, timestamp = new Date(), providerName = null) {
+	void saveMetric(referenceId, String metricName, Double metricValue, Date timestamp = new Date(), String providerName = null) {
 		saveMetrics(referenceId, ["$metricName":metricValue], timestamp, providerName)
 	}
 
-	void saveMetrics(referenceId, Map<String, Double> metrics, timestamp = new Date(), providerName = null) {
+	void saveMetrics(referenceId, Map<String, Double> metrics, Date timestamp = new Date(), String providerName = null) {
 		getProvider(providerName).saveMetrics(referenceId.toString(), metrics, timestamp, getConfig())
 	}
 
-	void bulkSaveMetrics(referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, providerName = null) {
+	void bulkSaveMetrics(referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, String providerName = null) {
 		getProvider(providerName).bulkSaveMetrics(referenceId, metricsByTime, getConfig())
 	}
 
-	/*   
+	/*
 {
    "start": "1970-01-01T00:00:00Z",
    "end": "2014-03-08T04:04:29Z",
@@ -144,16 +141,16 @@ class TimeSeriesService {
       ]
    }]
 }	*/
-	Map getMetrics(Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, Map<String, Object> options = null, providerName = null) {
+	Map getMetrics(Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, Map<String, Object> options = null, String providerName = null) {
 		getProvider(providerName).getMetrics(start, end, referenceIdQuery, metricNameQuery, options, getConfig())
 	}
 
-	/*   
+	/*
 {
    "start": "1970-01-01T00:00:00Z",
    "resolutionName": "1m",
    "end": "2014-03-08T04:04:29Z",
-   "resolutionInterval": 60,   
+   "resolutionInterval": 60,
    "items": [
       {
          "referenceId": "testSaveMetricsRegularWithAggregatesWithGet",
@@ -240,8 +237,7 @@ class TimeSeriesService {
    ]
 }
 	*/
-	Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null,Map<String, Object> options = null,  providerName = null) {
+	Map getMetricAggregates(String resolution, Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null,Map<String, Object> options = null,  String providerName = null) {
 		getProvider(providerName).getMetricAggregates(resolution, start, end, referenceIdQuery, metricNameQuery, options, getConfig())
 	}
-
 }

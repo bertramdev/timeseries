@@ -1,17 +1,11 @@
 package grails.plugins.timeseries.mem
 
-import groovy.util.GroovyTestCase
-import grails.converters.*
-import grails.plugins.timeseries.*
+import grails.converters.JSON
+import grails.plugins.timeseries.AbstractTimeSeriesProvider
 
 class TimeSeriesIntegrationTests extends GroovyTestCase {
 	def timeSeriesService
 	def grailsApplication
-	def setup() {
-	}
-
-	def cleanup() {
-	}
 
 	private getTestDate() {
 		def c = new GregorianCalendar()
@@ -163,28 +157,21 @@ class TimeSeriesIntegrationTests extends GroovyTestCase {
 		timeSeriesService.manageStorage()
 		println new JSON(timeSeriesService.getMetrics(new Date(0), new Date(System.currentTimeMillis() + 180000l))).toString(true)
 	}
-
 }
 
-
 class TestProvider extends AbstractTimeSeriesProvider {
-	@Override
  	String getName() { return 'foo'}
-	@Override
-	void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, groovy.util.ConfigObject config) {}
-	@Override
-	void bulkSaveMetrics(String referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, groovy.util.ConfigObject config) {}
-	@Override
-	Map getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config) {return null}
-	@Override
-	Map getMetricAggregates(String bucketName, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, groovy.util.ConfigObject config) {return null}
+	void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, ConfigObject config) {}
+	void bulkSaveMetrics(String referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, ConfigObject config) {}
+	Map getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, ConfigObject config) {}
+	Map getMetricAggregates(String bucketName, Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, ConfigObject config) {}
 	def test(resolution, now = new Date()) {
-		def conf = new groovy.util.ConfigObject()
+		def conf = new ConfigObject()
 		conf.poop.resolution = resolution
 		return getMetricStartAndInterval('poop',now, conf)
 	}
 	def testAggs( now = new Date()) {
-		def conf = new groovy.util.ConfigObject()
+		def conf = new ConfigObject()
 		conf.poop.resolution = '1s'
 		conf.poop.aggregates = ['1m':7, '1h':14, '1d': 90]
 		return getAggregateStartsAndIntervals('poop', now, conf)

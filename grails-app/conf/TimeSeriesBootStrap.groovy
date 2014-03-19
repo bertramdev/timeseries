@@ -1,9 +1,12 @@
 class TimeSeriesBootStrap {
-	def grailsApplication
+
+	def timeSeriesService
+
 	def init = { servletContext ->
-		grailsApplication.mainContext['timeSeriesService'].init()
+		timeSeriesService.init()
 	}
+
 	def destroy = {
-		grailsApplication.mainContext['timeSeriesService'].destroy()
+		timeSeriesService.destroy()
 	}
 }
