@@ -1,7 +1,7 @@
 import grails.plugins.timeseries.mem.MemoryTimeSeriesProvider
 
 class TimeSeriesGrailsPlugin {
-	def version = "0.1"
+	def version = "0.1.1"
 	def grailsVersion = "2.0 > *"
 	def title = "Time Series Plugin"
 	def author = "Jeremy Leng"
