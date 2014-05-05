@@ -105,6 +105,11 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 
 	protected String DEFAULT_RESOLUTION = ONE_MINUTE
 
+	protected getCounterStartAndInterval(String counterName, Date timestamp, ConfigObject config) {
+		def resolution = config.counters[counterName].containsKey('resolution') ? config.counters[counterName].resolution : ONE_MINUTE
+		return getStartAndInterval(timestamp, resolution)
+	}
+
 	protected getMetricStartAndInterval(String metricName, Date timestamp, ConfigObject config) {
 		def resolution = config[metricName].containsKey('resolution') ? config[metricName].resolution : ONE_MINUTE
 		return getStartAndInterval(timestamp, resolution)
@@ -236,6 +241,28 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 		return rtn.interval != null ? rtn : null
 	}
 
+
+	protected getCounterAggregateStartsAndIntervals(String counterName, Date timestamp, ConfigObject config) {
+		def rtn = [],
+			resolution = config.counters[counterName].containsKey('resolution') ? config.counters[counterName].resolution : DEFAULT_RESOLUTION,
+			b
+
+		if (config.counters[counterName].containsKey('aggregates')) {
+			def aggs = config.counters[counterName].aggregates
+			if (aggs instanceof Map) {
+				aggs.each {k, v->
+					if (SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[k] > SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[resolution]) {
+						b = getStartAndInterval(timestamp, k)
+						if (b) rtn << b
+					}
+				}
+			} else {
+				log.warn('grails.plugins.timeseries.aggregates configuration in invalid')
+			}
+		}
+		rtn
+	}
+
 	/*
 		config:
 		grails.plugins.timeseries.aggregates = ["{resolution name}": {days to expire}]
@@ -262,6 +289,18 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 		rtn
 	}
 
+	protected getCounterMillisecondExpirations(String counterName, ConfigObject config) {
+		def ms = DEFAULT_EXPIRATION
+		if (config.counters[metricName].containsKey('expiration')) {
+			try {
+				ms = Long.parseLong(config.counters[metricName].expiration?.toString())
+			} catch(e) {
+				log.warn('grails.plugins.timeseries.aggregates configuration in invalid')
+			}
+		}
+		ms
+	}
+
 	protected getMillisecondExpirations(String metricName, ConfigObject config) {
 		def ms = DEFAULT_EXPIRATION
 		if (config[metricName].containsKey('expiration')) {
@@ -272,6 +311,26 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			}
 		}
 		ms
+	}
+
+	protected getCounterAggregateMillisecondExpirations(String metricName, ConfigObject config) {
+		def rtn = [:]
+		if (config.counters[metricName].containsKey('aggregates')) {
+			def aggs = config.counters[metricName].aggregates
+			if (config.counters.containsKey('_aggregateExpirations')) {
+				rtn = config.counters['_aggregateExpirations']
+			} else {
+				if (aggs instanceof Map) {
+					aggs.each {k, v->
+						rtn[k] = parseDuration(v)
+					}
+					config['_aggregateExpirations'] = rtn
+				} else {
+					log.warn('grails.plugins.timeseries.aggregates configuration in invalid')
+				}
+			}
+		}
+		rtn
 	}
 
 	protected getAggregateMillisecondExpirations(String metricName, ConfigObject config) {

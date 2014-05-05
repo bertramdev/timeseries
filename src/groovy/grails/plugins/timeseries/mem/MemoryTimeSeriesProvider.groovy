@@ -108,10 +108,52 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 		}
 	}
 
+	void saveCounters(String referenceId, Map<String, Double> counters, Date timestamp, ConfigObject config) {
+		def startAndInterval,
+			aggregates
+		internalData[referenceId] = internalData[referenceId] ?: [__c:[:].asSynchronized(),_ca:[:].asSynchronized(),__m:[:].asSynchronized(),__a:[:].asSynchronized()].asSynchronized()
+		def refidData = internalData[referenceId],
+		    storedCounters = refidData.__c,
+		    storedAggregates = refidData._ca,
+		    currentCounters,
+		    counterAggregates
+
+		counters.each {k, v->
+			startAndInterval = getCounterStartAndInterval(k, timestamp, config)
+			storedCounters[k] =  storedCounters[k] ?: [__d:[:].asSynchronized(), __i:((Long)(startAndInterval.interval * 1000)), __r:startAndInterval.resolution].asSynchronized()
+			storedCounters[k].__d[startAndInterval.start] = storedCounters[k].__d[startAndInterval.start] ?: [__t:0d, __v: new ArrayList(startAndInterval.count).asSynchronized(),__s:startAndInterval.start, __n:startAndInterval.count, __e:new Date(startAndInterval.start.time + (startAndInterval.range * 60000))]
+			currentCounters = storedCounters[k].__d[startAndInterval.start]
+			currentCounters.__v[startAndInterval.interval] = currentCounters.__v[startAndInterval.interval] ?: 0d
+			currentCounters.__t += v
+			currentCounters.__v[startAndInterval.interval] += v
+
+			aggregates = getCounterAggregateStartsAndIntervals(k, timestamp, config)
+			aggregates?.each {agg->
+				storedAggregates[k] = storedAggregates[k] ?: [:].asSynchronized()
+				counterAggregates = storedAggregates[k]
+				counterAggregates[agg.resolution] = counterAggregates[agg.resolution] ?: [:].asSynchronized()
+				def aggRes = counterAggregates[agg.resolution]
+				aggRes[agg.start] = aggRes[agg.start] ?: [__t:0d, __v: new ArrayList(agg.count.intValue()).asSynchronized(), __s:agg.start, __n:agg.count, __e:new Date(agg.start.time + (agg.range * 60000))].asSynchronized()
+				def currentAgg = aggRes[agg.start]
+				currentAgg.__v[agg.interval] = currentAgg.__v[agg.interval] ?: 0d
+				currentAgg.__t += v
+				currentAgg.__v[agg.interval] += v
+			}
+		}
+
+	}
+
+	void bulkSaveCounters(String referenceId, List<Map<Date, Map<String, Double>>> countersByTime, ConfigObject config) {
+		countersByTime.each {timestamp, counters->
+			saveCounters(referenceId, counters, timestamp, config)
+		}
+	}
+
+
 	void saveMetrics(String referenceId, Map<String, Double> metrics, Date timestamp, ConfigObject config) {
 		def startAndInterval,
 			aggregates
-		internalData[referenceId] = internalData[referenceId] ?: [__m:[:].asSynchronized(),__a:[:].asSynchronized()].asSynchronized()
+		internalData[referenceId] = internalData[referenceId] ?: [__c:[:].asSynchronized(),_ca:[:].asSynchronized(),__m:[:].asSynchronized(),__a:[:].asSynchronized()].asSynchronized()
 		def refidData = internalData[referenceId],
 		    storedMetrics = refidData.__m,
 		    storedAggregates = refidData.__a,
@@ -167,6 +209,91 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 			saveMetrics(referenceId, metrics, timestamp, config)
 		}
 	}
+
+
+	Map getCounters(Date start, Date end, String referenceIdQuery, String counterNameQuery, Map<String, Object> options, ConfigObject config) {
+		def rtn = [:],
+			res
+		internalData.each {refId, db->
+			if (referenceIdQuery == null || refId =~ referenceIdQuery) {
+				rtn[refId] = rtn[refId] ?: [:]
+				db?.__c?.each {counterName, countersDb->
+					if (counterNameQuery == null || counterName =~ counterNameQuery) {
+						res = countersDb.__r
+						def interval = SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[res]
+						countersDb.__d.each {timestamp, map->
+							if (timestamp > start && timestamp < end) {
+								def f = false
+								map.__v.eachWithIndex {v,i->
+									def intervalTimestamp = new Date(timestamp.time + (i*interval))
+									if (intervalTimestamp > start && (v != null || f)) {
+										rtn[refId][counterName] = rtn[refId][counterName] ?: []
+										def rec = [start:intervalTimestamp, count:v]
+										if (options?.includeEndDate) rec.end = Date(timestamp.time + (i*interval) + interval)
+										rtn[refId][counterName] << rec
+										f = true
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		def items =[]
+		rtn.each {k, v->
+			def tmp = [referenceId: k, series:[]]
+			v.each {m, vals->
+				tmp.series << [name:m, values:vals]
+			}
+			items << tmp
+		}
+		[start:start, end:end, items:items]
+
+	}
+
+	Map getCounterAggregates(String resolution, Date start, Date end, String referenceIdQuery, String counterNameQuery, Map<String, Object> options, ConfigObject config) {
+		def rtn = [:],
+		    interval = SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[resolution]
+
+		internalData.each {refId, db->
+			if (referenceIdQuery == null || refId =~ referenceIdQuery) {
+				rtn[refId] = rtn[refId] ?: [:]
+				def aggs = db._ca
+				aggs?.each {counterName, aggCounters->
+					if (counterNameQuery == null || counterName =~ counterNameQuery) {
+						def agg = aggCounters[resolution]
+						agg?.each {timestamp, map->
+							if (timestamp > start && timestamp < end) {
+								def f = false
+								map.__v.eachWithIndex {v,i->
+									def intervalTimestamp = new Date(timestamp.time + (i*interval))
+									if (intervalTimestamp > start && (v != null || f)) {
+										rtn[refId][counterName] = rtn[refId][counterName] ?: []
+										def rec = [start:intervalTimestamp, count:v ]
+										if (options?.includeEndDate) rec.e = Date(timestamp.time + (i*interval) + interval)
+										rtn[refId][counterName] << rec
+										f = true
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		def items =[]
+		rtn.each {k, v->
+			def tmp = [referenceId: k, series:[]]
+			v.each {m, vals->
+				tmp.series << [name:m, values:vals]
+			}
+			items << tmp
+		}
+		[start:start, end:end, items:items]
+	}
+
 
 	Map getMetrics(Date start, Date end, String referenceIdQuery, String metricNameQuery, Map<String, Object> options, ConfigObject config) {
 		def rtn = [:],

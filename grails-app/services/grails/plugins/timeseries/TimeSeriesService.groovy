@@ -89,6 +89,18 @@ class TimeSeriesService {
       getProvider(providerName).manageStorage(getConfig())
    }
 
+   void saveCounter(referenceId, String counterName, Double increment, Date timestamp = new Date(), String providerName = null) {
+      saveCounters(referenceId, ["$counterName":increment], timestamp, providerName)
+   }
+
+   void saveCounters(referenceId, Map<String, Double> counters, Date timestamp = new Date(), String providerName = null) {
+      getProvider(providerName).saveCounters(referenceId.toString(), counters, timestamp, getConfig())
+   }
+
+   void bulkSaveCounters(referenceId, List<Map<Date, Map<String, Integer>>> countersByTime, String providerName = null) {
+      getProvider(providerName).bulkSaveCounters(referenceId, countersByTime, getConfig())
+   }
+
 	void saveMetric(referenceId, String metricName, Double metricValue, Date timestamp = new Date(), String providerName = null) {
 		saveMetrics(referenceId, ["$metricName":metricValue], timestamp, providerName)
 	}
@@ -100,6 +112,11 @@ class TimeSeriesService {
 	void bulkSaveMetrics(referenceId, List<Map<Date, Map<String, Double>>> metricsByTime, String providerName = null) {
 		getProvider(providerName).bulkSaveMetrics(referenceId, metricsByTime, getConfig())
 	}
+
+   Map getCounters(Date start, Date end, String referenceIdQuery = null, String counterNameQuery = null, Map<String, Object> options = null, String providerName = null) {
+      getProvider(providerName).getCounters(start, end, referenceIdQuery, counterNameQuery, options, getConfig())
+   }
+
 
 	/*
 {
@@ -144,6 +161,10 @@ class TimeSeriesService {
 	Map getMetrics(Date start, Date end, String referenceIdQuery = null, String metricNameQuery = null, Map<String, Object> options = null, String providerName = null) {
 		getProvider(providerName).getMetrics(start, end, referenceIdQuery, metricNameQuery, options, getConfig())
 	}
+
+   Map getCounterAggregates(String resolution, Date start, Date end, String referenceIdQuery = null, String counterNameQuery = null,Map<String, Object> options = null,  String providerName = null) {
+      getProvider(providerName).getCounterAggregates(resolution, start, end, referenceIdQuery, counterNameQuery, options, getConfig())
+   }
 
 	/*
 {
