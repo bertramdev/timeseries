@@ -106,7 +106,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 	protected String DEFAULT_RESOLUTION = ONE_MINUTE
 
 	protected getCounterStartAndInterval(String counterName, Date timestamp, ConfigObject config) {
-		def resolution = config.counters[counterName].containsKey('resolution') ? config.counters[counterName].resolution : ONE_MINUTE
+		def resolution = config[counterName].containsKey('resolution') ? config[counterName].resolution : ONE_MINUTE
 		return getStartAndInterval(timestamp, resolution)
 	}
 
@@ -127,13 +127,13 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 
 		if (resolution == ONE_SECOND) { // ~60 1s intervals in a 1m bucket
 			rtn.interval = interval.get(Calendar.SECOND)
-			rtn.intervalSecs = 1
+			rtn.intervalSecs = 1l
 			rtn.range = 60
 			rtn.count = 60
 			rtn.end = new Date(rtn.start.time.time + 60000l)
 		} else if (resolution == TEN_SECONDS) { // ~60 10s intervals in a 10m bucket
 			def min = Math.floor(rtn.start.get(Calendar.MINUTE) / 10)
-			rtn.intervalSecs = 10
+			rtn.intervalSecs = 10l
 			rtn.start.set(Calendar.MINUTE, min.intValue() * 10)
 			rtn.end = new Date(rtn.start.time.time + 600000l)
 			def diffSec = (interval.time.time - rtn.start.time.time) / 1000
@@ -142,7 +142,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.count = 60
 		} else if (resolution == THIRTY_SECONDS) { // ~60 30s intervals in a 30m bucket
 			def min = Math.floor(rtn.start.get(Calendar.MINUTE) / 30)
-			rtn.intervalSecs = 30
+			rtn.intervalSecs = 30l
 			rtn.start.set(Calendar.MINUTE, min.intValue() * 30)
 			rtn.end = new Date(rtn.start.time.time + 1800000l)
 			def diffSec = (interval.time.time - rtn.start.time.time) / 1000
@@ -150,7 +150,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.range = 1800
 		} else if (resolution == ONE_MINUTE) { // ~60 1m intervals in a 1 hour bucket
 			def min = Math.floor(rtn.start.get(Calendar.MINUTE) / 60)
-			rtn.intervalSecs = 60
+			rtn.intervalSecs = 60l
 			rtn.start.set(Calendar.MINUTE, min.intValue() * 60)
 			rtn.end = new Date(rtn.start.time.time + 3600000l)
 			def diffSec = (interval.time.time - rtn.start.time.time) / 1000
@@ -158,7 +158,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.range = 3600
 			rtn.count = 60
 		} else if (resolution == FIFTEEN_MINUTES) { // ~96 15m intervals in a 1 day bucket
-			rtn.intervalSecs = 15*60
+			rtn.intervalSecs = 900l
 			rtn.start.set(Calendar.MINUTE, 0)
 			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			rtn.end = new Date(rtn.start.time.time + 86400000l)
@@ -167,7 +167,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.range = 1440
 	 		rtn.count = 96
 		} else if (resolution == THIRTY_MINUTES) { // ~48 30m intervals in a 1 day bucket
-			rtn.intervalSecs = 30*60
+			rtn.intervalSecs = 1800l
 			rtn.start.set(Calendar.MINUTE, 0)
 			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			rtn.end = new Date(rtn.start.time.time + 86400000l)
@@ -176,7 +176,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.range = 1440
 			rtn.count = 48
 		} else if (resolution == ONE_HOUR) { // ~48 1h intervals in a 2 day bucket
-			rtn.intervalSecs = 60*60
+			rtn.intervalSecs = 3600l
 			rtn.start.set(Calendar.MINUTE, 0)
 			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			rtn.end = new Date(rtn.start.time.time + 172800000l)
@@ -189,7 +189,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.range = 2880
 			rtn.count = 48
 		} else if (resolution == TWO_HOURS) { // ~48 2h intervals in a 4 day bucket
-			rtn.intervalSecs = 60*60*2
+			rtn.intervalSecs = 7200l
 			rtn.start.set(Calendar.MINUTE, 0)
 			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			rtn.end = new Date(rtn.start.time.time + 345600000l)
@@ -201,6 +201,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.range = 1440*4
 			rtn.count = 48
 		} else if (resolution == FOUR_HOURS) { // ~42 4h intervals in a 7 day bucket
+			rtn.intervalSecs = 14400l
 			rtn.start.set(Calendar.MINUTE, 0)
 			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			rtn.end = new Date(rtn.start.time.time + 604800000l)
@@ -213,26 +214,29 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			rtn.range = 1440*7
 			rtn.count = 42
 		} else if (resolution == TWELVE_HOURS) { // ~60 12h intervals in a 1 month bucket
-			rtn.intervalSecs = 60*60*12
+			rtn.intervalSecs = 43200l
 			rtn.start.set(Calendar.MINUTE, 0)
 			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			rtn.start.set(Calendar.DATE, 1)
 			def diffMin = (interval.time.time - rtn.start.time.time) / 60000
 			rtn.interval = Math.floor(diffMin / 720).intValue()
 			rtn.range = 1440 * rtn.start.getActualMaximum(Calendar.DAY_OF_MONTH)
-			rtn.end = new Date(rtn.start.time.time + (rtn.range *60000))
+			rtn.end = rtn.start.clone()
+			rtn.end = rtn.end.time
+			rtn.end.set(Calendar.DATE, rtn.start.getActualMaximum(Calendar.DAY_OF_MONTH))
 			rtn.count = rtn.range / 720
 		} else if (resolution == ONE_DAY) { // ~30 24h intervals in a 1 month bucket
-			rtn.intervalSecs = 60*60*24
+			rtn.intervalSecs = 86400l
 			rtn.start.set(Calendar.MINUTE, 0)
 			rtn.start.set(Calendar.HOUR_OF_DAY, 0)
 			rtn.start.set(Calendar.DATE, 1)
-			rtn.end = new Date(rtn.start.time.time + 172800000l)
+			rtn.range = 1440 * rtn.start.getActualMaximum(Calendar.DAY_OF_MONTH)
 			def diffMin = (interval.time.time - rtn.start.time.time) / 60000
 			rtn.interval = Math.floor(diffMin / 1440).intValue()
-			rtn.range = 1440 * rtn.start.getActualMaximum(Calendar.DAY_OF_MONTH)
-			rtn.end = new Date(rtn.start.time.time + (rtn.range *60000))
-			rtn.count = rtn.range / 1440
+			rtn.end = rtn.start.clone()
+			rtn.end.set(Calendar.DATE, rtn.start.getActualMaximum(Calendar.DAY_OF_MONTH))
+			rtn.end = rtn.end.time
+			rtn.count = rtn.start.getActualMaximum(Calendar.DAY_OF_MONTH)
 		} else {
 			log.warn('timeseries resolution is invalid: ' + resolution)
 
@@ -257,7 +261,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 					}
 				}
 			} else {
-				log.warn('grails.plugins.timeseries.aggregates configuration in invalid')
+				log.warn('grails.plugins.timeseries.counter.aggregates configuration in invalid')
 			}
 		}
 		rtn
@@ -295,7 +299,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			try {
 				ms = Long.parseLong(config.counters[metricName].expiration?.toString())
 			} catch(e) {
-				log.warn('grails.plugins.timeseries.aggregates configuration in invalid')
+				log.warn('grails.plugins.timeseries.counters.expiration configuration in invalid')
 			}
 		}
 		ms
@@ -307,7 +311,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			try {
 				ms = Long.parseLong(config[metricName].expiration?.toString())
 			} catch(e) {
-				log.warn('grails.plugins.timeseries.aggregates configuration in invalid')
+				log.warn('grails.plugins.timeseries.expiration configuration in invalid')
 			}
 		}
 		ms
@@ -326,7 +330,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 					}
 					config['_aggregateExpirations'] = rtn
 				} else {
-					log.warn('grails.plugins.timeseries.aggregates configuration in invalid')
+					log.warn('grails.plugins.timeseries.counter.aggregates.expirations configuration in invalid')
 				}
 			}
 		}
@@ -346,7 +350,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 					}
 					config['_aggregateExpirations'] = rtn
 				} else {
-					log.warn('grails.plugins.timeseries.aggregates configuration in invalid')
+					log.warn('grails.plugins.timeseries.aggregates.expirations configuration in invalid')
 				}
 			}
 		}
