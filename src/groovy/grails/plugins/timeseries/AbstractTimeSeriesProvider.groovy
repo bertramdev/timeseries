@@ -248,10 +248,10 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 
 	protected getCounterAggregateStartsAndIntervals(String counterName, Date timestamp, ConfigObject config) {
 		def rtn = [],
-			resolution = config.counters[counterName].containsKey('resolution') ? config.counters[counterName].resolution : DEFAULT_RESOLUTION,
+			resolution = config[counterName].containsKey('resolution') ? config[counterName].resolution : DEFAULT_RESOLUTION,
 			b
 
-		if (config.counters[counterName].containsKey('aggregates')) {
+		if (config[counterName].containsKey('aggregates')) {
 			def aggs = config.counters[counterName].aggregates
 			if (aggs instanceof Map) {
 				aggs.each {k, v->
@@ -295,7 +295,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 
 	protected getCounterMillisecondExpirations(String counterName, ConfigObject config) {
 		def ms = DEFAULT_EXPIRATION
-		if (config.counters[metricName].containsKey('expiration')) {
+		if (config[metricName].containsKey('expiration')) {
 			try {
 				ms = Long.parseLong(config.counters[metricName].expiration?.toString())
 			} catch(e) {
@@ -319,7 +319,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 
 	protected getCounterAggregateMillisecondExpirations(String metricName, ConfigObject config) {
 		def rtn = [:]
-		if (config.counters[metricName].containsKey('aggregates')) {
+		if (config[metricName].containsKey('aggregates')) {
 			def aggs = config.counters[metricName].aggregates
 			if (config.counters.containsKey('_aggregateExpirations')) {
 				rtn = config.counters['_aggregateExpirations']

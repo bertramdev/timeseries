@@ -22,7 +22,7 @@ interface TimeSeriesProvider {
 
 	void init(ConfigObject config)
 
-	void shutdown(ConfigObject config)
+	void shutDown(groovy.util.ConfigObject config)
 
 	void manageStorage(ConfigObject config)
 

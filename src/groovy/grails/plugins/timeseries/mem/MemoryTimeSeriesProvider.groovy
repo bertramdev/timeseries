@@ -85,7 +85,7 @@ class MemoryTimeSeriesProvider extends AbstractTimeSeriesProvider {
 	}
 
 	@Override
-	void shutDown(ConfigObject config) {
+	void shutDown(groovy.util.ConfigObject config) {
 		manageStorage(config)
 	}
 
