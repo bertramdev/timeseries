@@ -252,7 +252,7 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 			b
 
 		if (config[counterName].containsKey('aggregates')) {
-			def aggs = config.counters[counterName].aggregates
+			def aggs = config[counterName].aggregates
 			if (aggs instanceof Map) {
 				aggs.each {k, v->
 					if (SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[k] > SUPPORTED_RESOLUTIONS_INTERVAL_SIZE[resolution]) {
@@ -297,9 +297,9 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 		def ms = DEFAULT_EXPIRATION
 		if (config[metricName].containsKey('expiration')) {
 			try {
-				ms = Long.parseLong(config.counters[metricName].expiration?.toString())
+				ms = Long.parseLong(config[metricName].expiration?.toString())
 			} catch(e) {
-				log.warn('grails.plugins.timeseries.counters.expiration configuration in invalid')
+				log.warn('grails.plugins.timeseries.expiration configuration in invalid')
 			}
 		}
 		ms
@@ -320,9 +320,9 @@ abstract class AbstractTimeSeriesProvider implements TimeSeriesProvider, GrailsA
 	protected getCounterAggregateMillisecondExpirations(String metricName, ConfigObject config) {
 		def rtn = [:]
 		if (config[metricName].containsKey('aggregates')) {
-			def aggs = config.counters[metricName].aggregates
-			if (config.counters.containsKey('_aggregateExpirations')) {
-				rtn = config.counters['_aggregateExpirations']
+			def aggs = config[metricName].aggregates
+			if (config.containsKey('_aggregateExpirations')) {
+				rtn = config['_aggregateExpirations']
 			} else {
 				if (aggs instanceof Map) {
 					aggs.each {k, v->
